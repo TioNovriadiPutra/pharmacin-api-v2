@@ -42,4 +42,18 @@ export default class DrugFactoriesController {
 
     return response.ok({ message: 'Data fetched!', data: factoryData })
   }
+
+  async deleteFactory({ response, params, auth }: HttpContext) {
+    try {
+      const factoryData = await DrugFactory.findOrFail(params.id)
+
+      await factoryData.related('partnerships').detach([auth.user!.clinicId])
+
+      return response.ok({ message: 'Data pabrik berhasil dihapus!' })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data pabrik tidak ditemukan!')
+      }
+    }
+  }
 }

@@ -46,6 +46,7 @@ router
   .group(() => {
     router.get('/', [DrugFactoriesController, 'getFactories'])
     router.post('/partnership', [DrugFactoriesController, 'addDrugFactory'])
+    router.delete('/partnership/:id', [DrugFactoriesController, 'deleteFactory'])
   })
   .prefix('/drug-factory')
   .use(
