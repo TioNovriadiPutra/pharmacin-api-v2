@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import Clinic from './clinic.js'
-import type { ManyToMany } from '@adonisjs/lucid/types/relations'
+import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
+import Drug from './drug.js'
 
 export default class DrugFactory extends BaseModel {
   @column({ isPrimary: true })
@@ -23,4 +24,7 @@ export default class DrugFactory extends BaseModel {
     pivotTable: 'factory_partnerships',
   })
   declare partnerships: ManyToMany<typeof Clinic>
+
+  @hasMany(() => Drug)
+  declare drugs: HasMany<typeof Drug>
 }

@@ -56,4 +56,21 @@ export default class DrugFactoriesController {
       }
     }
   }
+
+  async getFactoryDetail({ response, params }: HttpContext) {
+    try {
+      const factoryData = await DrugFactory.query()
+        .preload('drugs', (tmp) => {
+          tmp.preload('drugCategory')
+        })
+        .where('id', params.id)
+        .firstOrFail()
+
+      return response.ok({ message: 'Data fetched!', data: factoryData })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Drug factory data not found!')
+      }
+    }
+  }
 }

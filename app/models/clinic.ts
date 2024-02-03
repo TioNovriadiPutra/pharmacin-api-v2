@@ -3,6 +3,8 @@ import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import User from './user.js'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import DrugFactory from './drug_factory.js'
+import DrugCategory from './drug_category.js'
+import Drug from './drug.js'
 
 export default class Clinic extends BaseModel {
   @column({ isPrimary: true })
@@ -30,4 +32,10 @@ export default class Clinic extends BaseModel {
     pivotTable: 'factory_partnerships',
   })
   declare partnerships: ManyToMany<typeof DrugFactory>
+
+  @hasMany(() => DrugCategory)
+  declare drugCategories: HasMany<typeof DrugCategory>
+
+  @hasMany(() => Drug)
+  declare drugs: HasMany<typeof Drug>
 }
