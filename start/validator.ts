@@ -1,7 +1,6 @@
 import vine, { SimpleMessagesProvider } from '@vinejs/vine'
 
 vine.messagesProvider = new SimpleMessagesProvider({
-  // Registration error
   'fullName.required': 'Nama lengkap harus diisi!',
   'fullName.alpha': 'Nama lengkap harus terdiri dari alfabet saja!',
   'gender.required': 'Jenis kelamin harus diisi!',
@@ -22,4 +21,5 @@ vine.messagesProvider = new SimpleMessagesProvider({
   'factoryEmail.email': 'Format email pabrik salah!',
   'factoryPhone.required': 'Nomor telepon pabrik harus diisi!',
   'factoryPhone.mobile': 'Format nomor telepon pabrik salah!',
+  'categoryName.required': 'Kategori obat harus diisi!',
 })
