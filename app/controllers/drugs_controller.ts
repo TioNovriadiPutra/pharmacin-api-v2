@@ -1,7 +1,8 @@
 import DataNotFoundException from '#exceptions/data_not_found_exception'
 import ValidationException from '#exceptions/validation_exception'
+import Drug from '#models/drug'
 import DrugCategory from '#models/drug_category'
-import { addDrugCategoryValidator } from '#validators/drug'
+import { addDrugCategoryValidator, addDrugValidator } from '#validators/drug'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class DrugsController {
@@ -58,6 +59,65 @@ export default class DrugsController {
         throw new ValidationException(error.messages)
       } else if (error.status === 404) {
         throw new DataNotFoundException('Data kategori tidak ditemukan!')
+      }
+    }
+  }
+
+  async getCategoryDetail({ response, params }: HttpContext) {
+    try {
+      const categoryData = await DrugCategory.findOrFail(params.id)
+
+      return response.ok({ message: 'Data fetched!', data: categoryData })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data kategori tidak ditemukan!')
+      }
+    }
+  }
+
+  async addDrug({ request, response, auth }: HttpContext) {
+    try {
+      const data = await request.validateUsing(addDrugValidator)
+
+      const newDrug = new Drug()
+      newDrug.drug = data.drug
+      newDrug.drugGenericName = data.drugGenericName
+      newDrug.dose = data.dose
+      newDrug.shelve = data.shelve
+      newDrug.purchasePrice = data.purchasePrice
+      newDrug.sellingPrice = data.sellingPrice
+      newDrug.drugCategoryId = data.categoryId
+      newDrug.drugFactoryId = data.factoryId
+      newDrug.clinicId = auth.user!.clinicId
+
+      await newDrug.save()
+
+      return response.created({ message: 'Obat berhasil ditambahkan!' })
+    } catch (error) {
+      if (error.status === 422) {
+        throw new ValidationException(error.messages)
+      }
+    }
+  }
+
+  async getDrugs({ response, auth }: HttpContext) {
+    const drugData = await Drug.query()
+      .preload('drugCategory')
+      .where('clinic_id', auth.user!.clinicId)
+
+    return response.ok({ message: 'Data fetched!', data: drugData })
+  }
+
+  async deleteDrug({ response, params }: HttpContext) {
+    try {
+      const drugData = await Drug.findOrFail(params.id)
+
+      await drugData.delete()
+
+      return response.ok({ message: 'Data obat berhasil dihapus!' })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data obat tidak ditemukan!')
       }
     }
   }

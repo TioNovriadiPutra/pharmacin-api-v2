@@ -59,9 +59,13 @@ router
 
 router
   .group(() => {
+    router.get('/', [DrugsController, 'getDrugs'])
+    router.post('/', [DrugsController, 'addDrug'])
+    router.delete('/:id', [DrugsController, 'deleteDrug'])
     router
       .group(() => {
         router.get('/', [DrugsController, 'getCategories'])
+        router.get('/:id', [DrugsController, 'getCategoryDetail'])
         router.post('/', [DrugsController, 'addDrugCategory'])
         router.put('/:id', [DrugsController, 'updateDrugCategory'])
         router.delete('/:id', [DrugsController, 'deleteDrugCategory'])

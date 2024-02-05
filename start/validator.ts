@@ -22,4 +22,13 @@ vine.messagesProvider = new SimpleMessagesProvider({
   'factoryPhone.required': 'Nomor telepon pabrik harus diisi!',
   'factoryPhone.mobile': 'Format nomor telepon pabrik salah!',
   'categoryName.required': 'Kategori obat harus diisi!',
+  'drug.required': 'Nama obat harus diisi!',
+  'dose.required': 'Takaran harus diisi!',
+  'categoryId.required': 'Kategori harus dipilih!',
+  'shelve.number': 'Rak harus berisi angka!',
+  'factoryId.required': 'Pabrik harus dipilih!',
+  'purchasePrice.required': 'Harga beli harus diisi!',
+  'purchasePrice.number': 'Harga beli harus berisi angka!',
+  'sellingPrice.required': 'Harga jual harus diisi!',
+  'sellingPrice.number': 'Harga jual harus berisi angka!',
 })
