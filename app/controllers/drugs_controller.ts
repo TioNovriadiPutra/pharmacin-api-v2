@@ -121,4 +121,46 @@ export default class DrugsController {
       }
     }
   }
+
+  async updateDrug({ request, response, params }: HttpContext) {
+    try {
+      const data = await request.validateUsing(addDrugValidator)
+
+      const drugData = await Drug.findOrFail(params.id)
+      drugData.drug = data.drug
+      drugData.drugGenericName = data.drugGenericName
+      drugData.dose = data.dose
+      drugData.drugCategoryId = data.categoryId
+      drugData.drugFactoryId = data.factoryId
+      drugData.shelve = data.shelve
+      drugData.purchasePrice = data.purchasePrice
+      drugData.sellingPrice = data.sellingPrice
+
+      await drugData.save()
+
+      return response.ok({ message: 'Data obat berhasil diubah!' })
+    } catch (error) {
+      if (error.status === 422) {
+        throw new ValidationException(error.messages)
+      } else if (error.status === 404) {
+        throw new DataNotFoundException('Data obat tidak ditemukan!')
+      }
+    }
+  }
+
+  async getDrugDetail({ response, params }: HttpContext) {
+    try {
+      const drugData = await Drug.query()
+        .preload('drugCategory')
+        .preload('drugFactory')
+        .where('id', params.id)
+        .firstOrFail()
+
+      return response.ok({ message: 'Data fetched!', data: drugData })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data obat tidak ditemukan!')
+      }
+    }
+  }
 }

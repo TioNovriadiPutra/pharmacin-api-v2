@@ -61,16 +61,18 @@ router
   .group(() => {
     router.get('/', [DrugsController, 'getDrugs'])
     router.post('/', [DrugsController, 'addDrug'])
-    router.delete('/:id', [DrugsController, 'deleteDrug'])
     router
       .group(() => {
         router.get('/', [DrugsController, 'getCategories'])
-        router.get('/:id', [DrugsController, 'getCategoryDetail'])
         router.post('/', [DrugsController, 'addDrugCategory'])
+        router.get('/:id', [DrugsController, 'getCategoryDetail'])
         router.put('/:id', [DrugsController, 'updateDrugCategory'])
         router.delete('/:id', [DrugsController, 'deleteDrugCategory'])
       })
       .prefix('/category')
+    router.get('/:id', [DrugsController, 'getDrugDetail'])
+    router.put('/:id', [DrugsController, 'updateDrug'])
+    router.delete('/:id', [DrugsController, 'deleteDrug'])
   })
   .prefix('/drug')
   .use(
