@@ -4,6 +4,7 @@ import Drug from '#models/drug'
 import DrugCategory from '#models/drug_category'
 import { addDrugCategoryValidator, addDrugValidator } from '#validators/drug'
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
 
 export default class DrugsController {
   async addDrugCategory({ request, response, auth }: HttpContext) {
@@ -25,9 +26,10 @@ export default class DrugsController {
   }
 
   async getCategories({ response, auth }: HttpContext) {
-    const categoryData = await DrugCategory.query().where('clinic_id', auth.user!.clinicId)
+    // const categoryData = await DrugCategory.query().where('clinic_id', auth.user!.clinicId)
+    const categoryData = await db.rawQuery("SELECT * FROM clinics WHERE id = ?", [auth.user?.clinicId])
 
-    return response.ok({ message: 'Data fetched!', data: categoryData })
+    return response.ok({ message: 'Data fetched!', data: categoryData[0] })
   }
 
   async deleteDrugCategory({ response, params }: HttpContext) {
@@ -78,6 +80,7 @@ export default class DrugsController {
   async addDrug({ request, response, auth }: HttpContext) {
     try {
       const data = await request.validateUsing(addDrugValidator)
+      console.log("data", data)
 
       const newDrug = new Drug()
       newDrug.drug = data.drug

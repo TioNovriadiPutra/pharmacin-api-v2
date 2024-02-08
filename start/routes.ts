@@ -9,15 +9,18 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+// import TransactionsController from '#controllers/transactions_controller'
 
 const AuthController = () => import('#controllers/auth_controller')
 const UsersController = () => import('#controllers/users_controller')
 const DrugFactoriesController = () => import('#controllers/drug_factories_controller')
 const DrugsController = () => import('#controllers/drugs_controller')
+const TransactionsController = () => import('#controllers/transactions_controller')
 
 router.get('/', async () => {
   return {
-    hello: 'world',
+    status: 'OK',
+    message: 'Server Running'
   }
 })
 
@@ -75,6 +78,20 @@ router
     router.delete('/:id', [DrugsController, 'deleteDrug'])
   })
   .prefix('/drug')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+  router
+  .group(() => {
+    router.get('/', [TransactionsController, 'showPurchaseTransaction'])
+    router.get('/:id', [TransactionsController, 'showDetailPurchaseTransaction'])
+    router.post('/partnership', [TransactionsController, 'addPurchaseTransaction'])
+    // router.delete('/partnership/:id', [TransactionsController, 'deleteFactory'])
+  })
+  .prefix('/transaction')
   .use(
     middleware.auth({
       guards: ['api'],

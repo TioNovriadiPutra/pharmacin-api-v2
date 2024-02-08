@@ -5,6 +5,7 @@ import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import DrugFactory from './drug_factory.js'
 import DrugCategory from './drug_category.js'
 import Drug from './drug.js'
+import PurchaseTransaction from './purchase_transaction.js'
 
 export default class Clinic extends BaseModel {
   @column({ isPrimary: true })
@@ -38,4 +39,7 @@ export default class Clinic extends BaseModel {
 
   @hasMany(() => Drug)
   declare drugs: HasMany<typeof Drug>
+
+  @hasMany(() => PurchaseTransaction)
+  declare purchaseTransactions: HasMany<typeof PurchaseTransaction>
 }
