@@ -10,22 +10,17 @@ import { DateTime } from 'luxon'
 import idConverter from '../helpers/id_converter.js'
 import ValidationException from '#exceptions/validation_exception'
 import DataNotFoundException from '#exceptions/data_not_found_exception'
+import skipData from '../helpers/pagination.js'
 
 export default class TransactionsController {
   async getPurchaseTransactions({ request, response, auth }: HttpContext) {
     try {
-      var qs = request.qs()
-
-      var clinicId = auth.user!.clinicId
-      var page: number = qs.page ? qs.page : 1
-      var count: number = qs.count ? qs.count : 10
-
-      var offset = (page - 1) * count
-      var limit = count
+      const page = request.input('page', 1)
+      const perPage = request.input('perPage', 10)
 
       const purchaseDataList = await db.rawQuery(
         'SELECT purchase_transactions.id, invoice_number, total_price, purchase_transactions.factory_name, DATE_FORMAT(purchase_transactions.created_at, "%Y-%m-%d") AS created_at FROM purchase_transactions JOIN drug_factories on purchase_transactions.drug_factory_id = drug_factories.id WHERE clinic_id = ? LIMIT ? OFFSET ?',
-        [clinicId, limit, offset]
+        [auth.user!.clinicId, perPage, skipData(page, perPage)]
       )
 
       return response.ok({

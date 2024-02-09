@@ -4,6 +4,8 @@ import Clinic from '#models/clinic'
 import DrugFactory from '#models/drug_factory'
 import { addClinicDrugFactory } from '#validators/drug_factory'
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
+import skipData from '../helpers/pagination.js'
 
 export default class DrugFactoriesController {
   async addDrugFactory({ request, response, auth }: HttpContext) {
@@ -35,12 +37,19 @@ export default class DrugFactoriesController {
     }
   }
 
-  async getFactories({ response, auth }: HttpContext) {
-    const factoryData = await DrugFactory.query().whereHas('partnerships', (tmp) => {
-      tmp.where('clinic_id', auth.user!.clinicId)
-    })
+  async getFactories({ request, response, auth }: HttpContext) {
+    // const factoryData = await DrugFactory.query().whereHas('partnerships', (tmp) => {
+    //   tmp.where('clinic_id', auth.user!.clinicId)
+    // })
+    const page = request.input('page', 1)
+    const perPage = request.input('perPage', 10)
+    const factoryData = await db.rawQuery(
+      'SELECT * FROM drug_factories INNER JOIN factory_partnerships ON drug_factories.id = factory_partnerships.drug_factory_id WHERE factory_partnerships.clinic_id = ? LIMIT ? OFFSET ?',
+      [auth.user!.clinicId, perPage, skipData(page, perPage)]
+    )
+    
 
-    return response.ok({ message: 'Data fetched!', data: factoryData })
+    return response.ok({ message: 'Data fetched!', data: factoryData[0] })
   }
 
   async deleteFactory({ response, params, auth }: HttpContext) {
