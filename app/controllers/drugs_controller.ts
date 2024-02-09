@@ -5,6 +5,8 @@ import DrugCategory from '#models/drug_category'
 import { addDrugCategoryValidator, addDrugValidator } from '#validators/drug'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
+import idConverter from '../helpers/id_converter.js'
+import skipData from '../helpers/pagination.js'
 
 export default class DrugsController {
   async addDrugCategory({ request, response, auth }: HttpContext) {
@@ -17,6 +19,10 @@ export default class DrugsController {
 
       await newDrugCategory.save()
 
+      newDrugCategory.categoryNumber = `KTO${idConverter(newDrugCategory.id)}`
+
+      await newDrugCategory.save()
+
       return response.created({ message: 'Kategori obat berhasil ditambahkan!' })
     } catch (error) {
       if (error.status === 422) {
@@ -25,9 +31,18 @@ export default class DrugsController {
     }
   }
 
-  async getCategories({ response, auth }: HttpContext) {
-    // const categoryData = await DrugCategory.query().where('clinic_id', auth.user!.clinicId)
-    const categoryData = await db.rawQuery("SELECT * FROM clinics WHERE id = ?", [auth.user?.clinicId])
+  async getCategories({ request, response, auth }: HttpContext) {
+    const page = request.input('page', 1)
+    const perPage = request.input('perPage', 10)
+
+    const categoryData = await db.rawQuery(
+      `SELECT id, category_number, category_name 
+      FROM drug_categories 
+      WHERE clinic_id = ?
+      LIMIT ?
+      OFFSET ?`,
+      [auth.user!.clinicId, perPage, skipData(page, perPage)]
+    )
 
     return response.ok({ message: 'Data fetched!', data: categoryData[0] })
   }
@@ -67,12 +82,19 @@ export default class DrugsController {
 
   async getCategoryDetail({ response, params }: HttpContext) {
     try {
-      const categoryData = await DrugCategory.findOrFail(params.id)
+      const categoryData = await db.rawQuery(
+        'SELECT id, category_name FROM drug_categories WHERE id = ?',
+        [params.id]
+      )
 
-      return response.ok({ message: 'Data fetched!', data: categoryData })
+      if (categoryData[0].length === 0) {
+        throw new DataNotFoundException('Data kategori tidak ditemukan')
+      }
+
+      return response.ok({ message: 'Data fetched!', data: categoryData[0][0] })
     } catch (error) {
       if (error.status === 404) {
-        throw new DataNotFoundException('Data kategori tidak ditemukan!')
+        throw error
       }
     }
   }
@@ -80,7 +102,7 @@ export default class DrugsController {
   async addDrug({ request, response, auth }: HttpContext) {
     try {
       const data = await request.validateUsing(addDrugValidator)
-      console.log("data", data)
+      console.log('data', data)
 
       const newDrug = new Drug()
       newDrug.drug = data.drug
@@ -95,6 +117,10 @@ export default class DrugsController {
 
       await newDrug.save()
 
+      newDrug.drugNumber = `OBT${idConverter(newDrug.id)}`
+
+      await newDrug.save()
+
       return response.created({ message: 'Obat berhasil ditambahkan!' })
     } catch (error) {
       if (error.status === 422) {
@@ -103,12 +129,28 @@ export default class DrugsController {
     }
   }
 
-  async getDrugs({ response, auth }: HttpContext) {
-    const drugData = await Drug.query()
-      .preload('drugCategory')
-      .where('clinic_id', auth.user!.clinicId)
+  async getDrugs({ request, response, auth }: HttpContext) {
+    const page = request.input('page', 1)
+    const perPage = request.input('perPage', 10)
 
-    return response.ok({ message: 'Data fetched!', data: drugData })
+    const drugData = await db.rawQuery(
+      `SELECT 
+        drugs.id,
+        drugs.drug, 
+        drugs.drug_generic_name, 
+        drug_categories.category_name, 
+        drugs.shelve, 
+        drugs.selling_price, 
+        drugs.dose 
+        FROM drugs 
+        JOIN drug_categories ON drugs.drug_category_id = drug_categories.id 
+        WHERE drugs.clinic_id = ?
+        LIMIT ?
+        OFFSET ?`,
+      [auth.user!.clinicId, perPage, skipData(page, perPage)]
+    )
+
+    return response.ok({ message: 'Data fetched!', data: drugData[0] })
   }
 
   async deleteDrug({ response, params }: HttpContext) {
@@ -153,16 +195,45 @@ export default class DrugsController {
 
   async getDrugDetail({ response, params }: HttpContext) {
     try {
-      const drugData = await Drug.query()
-        .preload('drugCategory')
-        .preload('drugFactory')
-        .where('id', params.id)
-        .firstOrFail()
+      const drugData = await db.rawQuery(
+        `SELECT
+          drugs.id,
+          drugs.drug_number,
+          drugs.drug,
+          drugs.drug_generic_name,
+          drugs.dose,
+          drugs.shelve,
+          drugs.purchase_price,
+          drugs.selling_price,
+          drugs.total_stock,
+          JSON_OBJECT(
+            "id", drug_categories.id,
+            "category_name", drug_categories.category_name
+          ) AS drug_category,
+          JSON_OBJECT(
+            "id", drug_factories.id,
+            "factory_name", drug_factories.factory_name
+          ) AS drug_factory
+          FROM drugs 
+          JOIN drug_categories ON drugs.drug_category_id = drug_categories.id 
+          JOIN drug_factories ON drugs.drug_factory_id = drug_factories.id 
+          WHERE drugs.id = ?`,
+        [params.id]
+      )
 
-      return response.ok({ message: 'Data fetched!', data: drugData })
+      if (drugData[0].length === 0) {
+        throw new DataNotFoundException('Data obat tidak ditemukan!')
+      }
+
+      Object.assign(drugData[0][0], {
+        drug_category: JSON.parse(drugData[0][0].drug_category),
+        drug_factory: JSON.parse(drugData[0][0].drug_factory),
+      })
+
+      return response.ok({ message: 'Data fetched!', data: drugData[0][0] })
     } catch (error) {
       if (error.status === 404) {
-        throw new DataNotFoundException('Data obat tidak ditemukan!')
+        throw error
       }
     }
   }

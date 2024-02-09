@@ -9,6 +9,9 @@ export default class DrugCategory extends BaseModel {
   declare id: number
 
   @column()
+  declare categoryNumber: string
+
+  @column()
   declare categoryName: string
 
   @column.dateTime({ autoCreate: true })

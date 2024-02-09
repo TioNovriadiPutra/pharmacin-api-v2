@@ -12,6 +12,9 @@ export default class Drug extends BaseModel {
   declare id: number
 
   @column()
+  declare drugNumber: string
+
+  @column()
   declare drug: string
 
   @column()

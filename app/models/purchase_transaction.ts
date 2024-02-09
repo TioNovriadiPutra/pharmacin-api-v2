@@ -1,16 +1,16 @@
 import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import Clinic from './clinic.js';
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations';
-import PurchaseShoppingCart from './purchase_shopping_cart.js';
-import DrugFactory from './drug_factory.js';
+import Clinic from './clinic.js'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import PurchaseShoppingCart from './purchase_shopping_cart.js'
+import DrugFactory from './drug_factory.js'
 
 export default class PurchaseTransaction extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
   @column()
-  declare invoiceNumber: string;
+  declare invoiceNumber: string
 
   @column()
   declare totalPrice: number
@@ -33,11 +33,11 @@ export default class PurchaseTransaction extends BaseModel {
   @column()
   declare clinicId: number
 
+  @column()
+  declare drugFactoryId?: number
+
   @belongsTo(() => Clinic)
   declare clinic: BelongsTo<typeof Clinic>
-
-  @column()
-  declare drugFactoryId: number
 
   @belongsTo(() => DrugFactory)
   declare drugFactory: BelongsTo<typeof DrugFactory>

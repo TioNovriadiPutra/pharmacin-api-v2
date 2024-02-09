@@ -1,26 +1,17 @@
-/*
-|--------------------------------------------------------------------------
-| Routes file
-|--------------------------------------------------------------------------
-|
-| The routes file is used for defining the HTTP routes.
-|
-*/
-
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
-// import TransactionsController from '#controllers/transactions_controller'
 
 const AuthController = () => import('#controllers/auth_controller')
 const UsersController = () => import('#controllers/users_controller')
 const DrugFactoriesController = () => import('#controllers/drug_factories_controller')
 const DrugsController = () => import('#controllers/drugs_controller')
 const TransactionsController = () => import('#controllers/transactions_controller')
+const DrugStocksController = () => import('#controllers/drug_stocks_controller')
 
 router.get('/', async () => {
   return {
     status: 'OK',
-    message: 'Server Running'
+    message: 'Server Running',
   }
 })
 
@@ -84,14 +75,29 @@ router
     })
   )
 
-  router
+router
   .group(() => {
-    router.get('/', [TransactionsController, 'showPurchaseTransaction'])
-    router.get('/:id', [TransactionsController, 'showDetailPurchaseTransaction'])
-    router.post('/partnership', [TransactionsController, 'addPurchaseTransaction'])
+    router
+      .group(() => {
+        router.get('/', [TransactionsController, 'getPurchaseTransactions'])
+        router.post('/', [TransactionsController, 'addPurchaseTransaction'])
+      })
+      .prefix('/purchase')
+    // router.get('/:id', [TransactionsController, 'showDetailPurchaseTransaction'])
     // router.delete('/partnership/:id', [TransactionsController, 'deleteFactory'])
   })
   .prefix('/transaction')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [DrugStocksController, 'getStocks'])
+  })
+  .prefix('/stock')
   .use(
     middleware.auth({
       guards: ['api'],

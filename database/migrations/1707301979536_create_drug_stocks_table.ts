@@ -6,10 +6,7 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').primary()
-      
-      table.integer('purchase_shopping_cart_id')
-      .unsigned().references('id').inTable('purchase_shopping_carts').onDelete('CASCADE').notNullable()
-      table.string('batch_number', 50).notNullable().unique()
+      table.string('batch_number', 50).nullable().unique()
       table.integer('total_stock').notNullable()
       table.integer('sold_stock').notNullable().defaultTo(0)
       table.integer('active_stock').notNullable()
@@ -23,6 +20,13 @@ export default class extends BaseSchema {
         .inTable('drugs')
         .onDelete('CASCADE')
         .notNullable()
+      table
+        .integer('purchase_shopping_cart_id')
+        .unsigned()
+        .references('id')
+        .inTable('purchase_shopping_carts')
+        .onDelete('SET NULL')
+        .nullable()
     })
   }
 
