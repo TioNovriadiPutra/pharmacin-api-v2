@@ -22,11 +22,6 @@ export default class DrugStock extends BaseModel {
   @column.date()
   declare expired: DateTime
 
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
-
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
 
   @column()
   declare drugId: number
