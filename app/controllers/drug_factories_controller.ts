@@ -40,6 +40,8 @@ export default class DrugFactoriesController {
   async getFactories({ request, response, auth }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
+    const searchTerm = request.input('searchTerm', '');
+    const search = `%${searchTerm}%`;
     const factoryData = await db.rawQuery(
       `SELECT
         id,
@@ -49,8 +51,9 @@ export default class DrugFactoriesController {
         FROM drug_factories
         INNER JOIN factory_partnerships ON drug_factories.id = factory_partnerships.drug_factory_id
         WHERE factory_partnerships.clinic_id = ? 
+        AND (factory_name LIKE ? OR factory_email LIKE ? OR factory_phone LIKE ?)
         LIMIT ? OFFSET ?`,
-      [auth.user!.clinicId, perPage, skipData(page, perPage)]
+      [auth.user!.clinicId, search, search, search, perPage, skipData(page, perPage)]
     )
 
     return response.ok({ message: 'Data fetched!', data: factoryData[0] })

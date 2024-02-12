@@ -132,7 +132,8 @@ export default class DrugsController {
   async getDrugs({ request, response, auth }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
-
+    const searchTerm = request.input('searchTerm', '');
+    const search = `%${searchTerm}%`;
     const drugData = await db.rawQuery(
       `SELECT 
         drugs.id,
@@ -145,9 +146,10 @@ export default class DrugsController {
         FROM drugs 
         JOIN drug_categories ON drugs.drug_category_id = drug_categories.id 
         WHERE drugs.clinic_id = ?
+        AND (drugs.drug LIKE ? OR drugs.drug_generic_name LIKE ? OR drugs.shelve LIKE ? OR drug_categories.category_name LIKE ?)
         LIMIT ?
         OFFSET ?`,
-      [auth.user!.clinicId, perPage, skipData(page, perPage)]
+      [auth.user!.clinicId, search, search, search, search, perPage, skipData(page, perPage)]
     )
 
     return response.ok({ message: 'Data fetched!', data: drugData[0] })
