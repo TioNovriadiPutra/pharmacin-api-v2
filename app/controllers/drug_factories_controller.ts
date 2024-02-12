@@ -38,16 +38,20 @@ export default class DrugFactoriesController {
   }
 
   async getFactories({ request, response, auth }: HttpContext) {
-    // const factoryData = await DrugFactory.query().whereHas('partnerships', (tmp) => {
-    //   tmp.where('clinic_id', auth.user!.clinicId)
-    // })
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
     const factoryData = await db.rawQuery(
-      'SELECT * FROM drug_factories INNER JOIN factory_partnerships ON drug_factories.id = factory_partnerships.drug_factory_id WHERE factory_partnerships.clinic_id = ? LIMIT ? OFFSET ?',
+      `SELECT
+        id,
+        factory_name,
+        factory_email,
+        factory_phone
+        FROM drug_factories
+        INNER JOIN factory_partnerships ON drug_factories.id = factory_partnerships.drug_factory_id
+        WHERE factory_partnerships.clinic_id = ? 
+        LIMIT ? OFFSET ?`,
       [auth.user!.clinicId, perPage, skipData(page, perPage)]
     )
-    
 
     return response.ok({ message: 'Data fetched!', data: factoryData[0] })
   }
@@ -66,20 +70,47 @@ export default class DrugFactoriesController {
     }
   }
 
-  async getFactoryDetail({ response, params }: HttpContext) {
+  async getFactoryDetail({ response, params, auth }: HttpContext) {
     try {
-      const factoryData = await DrugFactory.query()
-        .preload('drugs', (tmp) => {
-          tmp.preload('drugCategory')
-        })
-        .where('id', params.id)
-        .firstOrFail()
+      const factoryData = await db.rawQuery(
+        `SELECT
+          df.id,
+          df.factory_name,
+          df.factory_email,
+          df.factory_phone,
+          CONCAT(
+            "[",
+            GROUP_CONCAT(
+              JSON_OBJECT(
+                "id", d.id,
+                "created_at", DATE_FORMAT(d.created_at, "%Y-%m-%d"),
+                "drug", d.drug,
+                "drug_generic_name", d.drug_generic_name,
+                "category_name", dc.category_name,
+                "purchase_price", d.purchase_price,
+                "total_stock", d.total_stock
+              )
+            ),
+            "]"
+          ) AS drug_list
+          FROM drug_factories df
+          INNER JOIN drugs d ON df.id = d.drug_factory_id AND d.clinic_id = ?
+          INNER JOIN drug_categories dc ON dc.id = d.drug_category_id
+          WHERE df.id = ?`,
+        [auth.user!.clinicId, params.id]
+      )
 
-      return response.ok({ message: 'Data fetched!', data: factoryData })
-    } catch (error) {
-      if (error.status === 404) {
+      if (factoryData[0].length === 0) {
         throw new DataNotFoundException('Drug factory data not found!')
       }
+
+      Object.assign(factoryData[0][0], {
+        drug_list: JSON.parse(factoryData[0][0].drug_list),
+      })
+
+      return response.ok({ message: 'Data fetched!', data: factoryData[0][0] })
+    } catch (error) {
+      throw error
     }
   }
 }
