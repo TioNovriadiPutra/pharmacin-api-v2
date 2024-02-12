@@ -17,10 +17,12 @@ export default class TransactionsController {
     try {
       const page = request.input('page', 1)
       const perPage = request.input('perPage', 10)
+      const searchTerm = request.input('searchTerm', '');
+      const search = `%${searchTerm}%`;
 
       const purchaseDataList = await db.rawQuery(
-        'SELECT purchase_transactions.id, invoice_number, total_price, purchase_transactions.factory_name, DATE_FORMAT(purchase_transactions.created_at, "%Y-%m-%d") AS created_at FROM purchase_transactions JOIN drug_factories on purchase_transactions.drug_factory_id = drug_factories.id WHERE clinic_id = ? LIMIT ? OFFSET ?',
-        [auth.user!.clinicId, perPage, skipData(page, perPage)]
+        'SELECT purchase_transactions.id, invoice_number, total_price, purchase_transactions.factory_name, DATE_FORMAT(purchase_transactions.created_at, "%Y-%m-%d") AS created_at FROM purchase_transactions JOIN drug_factories on purchase_transactions.drug_factory_id = drug_factories.id WHERE clinic_id = ? AND (invoice_number LIKE ? OR purchase_transactions.factory_name LIKE ?) LIMIT ? OFFSET ?',
+        [auth.user!.clinicId, search, search, perPage, skipData(page, perPage)]
       )
 
       return response.ok({
