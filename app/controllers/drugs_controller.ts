@@ -34,14 +34,16 @@ export default class DrugsController {
   async getCategories({ request, response, auth }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
-
+    const searchTerm = request.input('searchTerm', '');
+    const search = `%${searchTerm}%`;
     const categoryData = await db.rawQuery(
       `SELECT id, category_number, category_name 
       FROM drug_categories 
       WHERE clinic_id = ?
+      AND (category_name LIKE ?)
       LIMIT ?
       OFFSET ?`,
-      [auth.user!.clinicId, perPage, skipData(page, perPage)]
+      [auth.user!.clinicId, search, perPage, skipData(page, perPage)]
     )
 
     return response.ok({ message: 'Data fetched!', data: categoryData[0] })
