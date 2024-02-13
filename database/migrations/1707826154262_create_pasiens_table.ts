@@ -8,6 +8,7 @@ export default class extends BaseSchema {
       table.increments('id').primary()
 
       table.string('nama_pasien', 255).notNullable()
+      table.integer('clinic_id').unsigned().references('id').inTable('clinics').notNullable().onDelete('cascade')
       table.integer('nik_pasien').notNullable()
       table.string('no_rm', 50).notNullable()
       table.enum('gender', ['male', 'female']).notNullable()
