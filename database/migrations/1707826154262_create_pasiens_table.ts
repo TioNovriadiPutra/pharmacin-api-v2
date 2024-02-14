@@ -16,7 +16,7 @@ export default class extends BaseSchema {
       table.date('tanggal_lahir_pasien').notNullable()
       table.string('tempat_lahir_pasien', 50).notNullable()
       table.text('alamat_pasien').notNullable()
-      table.integer('no_hp').notNullable()
+      table.string('no_hp', 20).notNullable()
       table.string('alergi_obat').nullable()
 
       table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
