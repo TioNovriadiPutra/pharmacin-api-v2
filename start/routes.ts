@@ -7,6 +7,7 @@ const DrugFactoriesController = () => import('#controllers/drug_factories_contro
 const DrugsController = () => import('#controllers/drugs_controller')
 const TransactionsController = () => import('#controllers/transactions_controller')
 const DrugStocksController = () => import('#controllers/drug_stocks_controller')
+const PasiensController = () => import('#controllers/pasiens_controller')
 
 router.get('/', async () => {
   return {
@@ -98,6 +99,18 @@ router
     router.get('/', [DrugStocksController, 'getStocks'])
   })
   .prefix('/stock')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [PasiensController, 'getPasien'])
+    router.post('/', [PasiensController, 'addPasienData'])
+  })
+  .prefix('/pasien')
   .use(
     middleware.auth({
       guards: ['api'],
