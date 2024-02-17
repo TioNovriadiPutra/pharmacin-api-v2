@@ -16,12 +16,22 @@ export default class TransactionsController {
   async getPurchaseTransactions({ request, response, auth }: HttpContext) {
     try {
       const page = request.input('page', 1)
-      const perPage = request.input('perPage', 10)
-      const searchTerm = request.input('searchTerm', '');
-      const search = `%${searchTerm}%`;
+      const perPage = request.input('perPage', 20)
+      const searchTerm = request.input('searchTerm', '')
+      const search = `%${searchTerm}%`
 
       const purchaseDataList = await db.rawQuery(
-        'SELECT purchase_transactions.id, invoice_number, total_price, purchase_transactions.factory_name, DATE_FORMAT(purchase_transactions.created_at, "%Y-%m-%d") AS created_at FROM purchase_transactions JOIN drug_factories on purchase_transactions.drug_factory_id = drug_factories.id WHERE clinic_id = ? AND (invoice_number LIKE ? OR purchase_transactions.factory_name LIKE ?) LIMIT ? OFFSET ?',
+        `SELECT
+          pt.id,
+          pt.invoice_number,
+          pt.total_price,
+          df.factory_name,
+          DATE_FORMAT(pt.created_at, "%Y-%m-%d") AS created_at
+          FROM purchase_transactions pt
+          JOIN drug_factories df ON pt.drug_factory_id = df.id
+          WHERE pt.clinic_id = ? AND (pt.invoice_number LIKE ? OR df.factory_name LIKE ?)
+          ORDER BY pt.created_at DESC
+          LIMIT ? OFFSET ?`,
         [auth.user!.clinicId, search, search, perPage, skipData(page, perPage)]
       )
 
@@ -125,6 +135,22 @@ export default class TransactionsController {
         throw new ValidationException(error.messages)
       } else if (error.status === 404) {
         throw new DataNotFoundException('Data pabrik atau obat tidak ditemukan!')
+      }
+    }
+  }
+
+  async deletePurchaseTransaction({ response, params }: HttpContext) {
+    try {
+      const purchaseTransactionData = await PurchaseTransaction.findOrFail(params.id)
+
+      await purchaseTransactionData.delete()
+
+      return response.ok({
+        message: 'Data pembelian berhasil dihapus!',
+      })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data pembelian tidak ditemukan!')
       }
     }
   }

@@ -34,8 +34,8 @@ export default class DrugsController {
   async getCategories({ request, response, auth }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
-    const searchTerm = request.input('searchTerm', '');
-    const search = `%${searchTerm}%`;
+    const searchTerm = request.input('searchTerm', '')
+    const search = `%${searchTerm}%`
     const categoryData = await db.rawQuery(
       `SELECT id, category_number, category_name 
       FROM drug_categories 
@@ -134,8 +134,8 @@ export default class DrugsController {
   async getDrugs({ request, response, auth }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
-    const searchTerm = request.input('searchTerm', '');
-    const search = `%${searchTerm}%`;
+    const searchTerm = request.input('searchTerm', '')
+    const search = `%${searchTerm}%`
     const drugData = await db.rawQuery(
       `SELECT 
         drugs.id,
@@ -201,27 +201,29 @@ export default class DrugsController {
     try {
       const drugData = await db.rawQuery(
         `SELECT
-          drugs.id,
-          drugs.drug_number,
-          drugs.drug,
-          drugs.drug_generic_name,
-          drugs.dose,
-          drugs.shelve,
-          drugs.purchase_price,
-          drugs.selling_price,
-          drugs.total_stock,
+          d.id,
+          d.drug_number,
+          d.drug,
+          d.drug_generic_name,
+          d.dose,
+          d.shelve,
+          d.purchase_price,
+          d.selling_price,
+          d.total_stock,
+          COUNT(psc.id) AS total_purchases,
           JSON_OBJECT(
-            "id", drug_categories.id,
-            "category_name", drug_categories.category_name
+            "id", dc.id,
+            "category_name", dc.category_name
           ) AS drug_category,
           JSON_OBJECT(
-            "id", drug_factories.id,
-            "factory_name", drug_factories.factory_name
+            "id", df.id,
+            "factory_name", df.factory_name
           ) AS drug_factory
-          FROM drugs 
-          JOIN drug_categories ON drugs.drug_category_id = drug_categories.id 
-          JOIN drug_factories ON drugs.drug_factory_id = drug_factories.id 
-          WHERE drugs.id = ?`,
+          FROM drugs d 
+          JOIN drug_categories dc ON d.drug_category_id = dc.id 
+          JOIN drug_factories df ON d.drug_factory_id = df.id
+          JOIN purchase_shopping_carts psc ON psc.drug_id = d.id
+          WHERE d.id = ?`,
         [params.id]
       )
 
@@ -238,6 +240,8 @@ export default class DrugsController {
     } catch (error) {
       if (error.status === 404) {
         throw error
+      } else {
+        console.log(error)
       }
     }
   }

@@ -82,10 +82,9 @@ router
       .group(() => {
         router.get('/', [TransactionsController, 'getPurchaseTransactions'])
         router.post('/', [TransactionsController, 'addPurchaseTransaction'])
+        router.delete('/:id', [TransactionsController, 'deletePurchaseTransaction'])
       })
       .prefix('/purchase')
-    // router.get('/:id', [TransactionsController, 'showDetailPurchaseTransaction'])
-    // router.delete('/partnership/:id', [TransactionsController, 'deleteFactory'])
   })
   .prefix('/transaction')
   .use(

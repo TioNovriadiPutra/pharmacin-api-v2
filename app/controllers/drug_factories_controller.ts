@@ -40,8 +40,8 @@ export default class DrugFactoriesController {
   async getFactories({ request, response, auth }: HttpContext) {
     const page = request.input('page', 1)
     const perPage = request.input('perPage', 10)
-    const searchTerm = request.input('searchTerm', '');
-    const search = `%${searchTerm}%`;
+    const searchTerm = request.input('searchTerm', '')
+    const search = `%${searchTerm}%`
     const factoryData = await db.rawQuery(
       `SELECT
         id,
