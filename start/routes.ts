@@ -106,6 +106,11 @@ router
 
 router
   .group(() => {
+    router
+    .group(() => {
+      router.post('/', [PasiensController, 'pasienQueue'])
+    })
+    .prefix('queue')
     router.get('/', [PasiensController, 'getPasien'])
     router.post('/', [PasiensController, 'addPasienData'])
   })
