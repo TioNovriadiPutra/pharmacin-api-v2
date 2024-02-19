@@ -15,7 +15,8 @@ export default class extends BaseSchema {
       table.integer('nadi').notNullable()
       table.text('subjective').notNullable()
       table.text('objective').notNullable()
-      table.string('assesment_plan').notNullable()
+      table.string('assesment').notNullable()
+      table.string('plan').notNullable()
 
       table.timestamp('created_at').notNullable().defaultTo(this.now())
       table.timestamp('updated_at').notNullable().defaultTo(this.now())
