@@ -109,8 +109,9 @@ router
     router
     .group(() => {
       router.post('/', [PasiensController, 'pasienQueue'])
+      router.post('/add', [PasiensController, 'addPasienAndQueue'])
     })
-    .prefix('queue')
+    .prefix('/queue')
     router.get('/', [PasiensController, 'getPasien'])
     router.post('/', [PasiensController, 'addPasienData'])
   })
