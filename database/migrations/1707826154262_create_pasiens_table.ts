@@ -9,8 +9,8 @@ export default class extends BaseSchema {
 
       table.string('nama_pasien', 255).notNullable()
       table.integer('clinic_id').unsigned().references('id').inTable('clinics').notNullable().onDelete('cascade')
-      table.integer('nik_pasien').notNullable()
-      table.string('no_rm', 50).notNullable()
+      table.integer('nik_pasien').notNullable().unique()
+      table.string('no_rm', 10).notNullable()
       table.enum('gender', ['male', 'female']).notNullable()
       table.string('occupation', 100).notNullable()
       table.date('tanggal_lahir_pasien').notNullable()
