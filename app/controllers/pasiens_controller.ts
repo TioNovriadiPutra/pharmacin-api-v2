@@ -10,6 +10,8 @@ import { DateTime } from 'luxon';
 import PasienTransactionHeader from '#models/pasien_transaction_header';
 import QueuePasien from '#models/queue_pasien';
 import { Status } from '../enums/status_enum.js';
+import { assignDokterValidator } from '#validators/dokter';
+import DataNotFoundException from '#exceptions/data_not_found_exception';
 
 export default class PasiensController {
     async getPasien({ request, response, auth }: HttpContext) {
@@ -82,8 +84,6 @@ export default class PasiensController {
           let queue_number = 0
           const timeNow = DateTime.now()
 
-          // if found
-          if(pasienData) {
             const addPasienHeader = new PasienTransactionHeader()
             addPasienHeader.pasienId = pasienData.id
             addPasienHeader.dokterId = 0
@@ -101,7 +101,7 @@ export default class PasiensController {
             newQueuePasien.perawatId = addPasienHeader.perawatId
             newQueuePasien.statusPanggilPerawat = false
             newQueuePasien.statusPeriksa = 'pending' as Status
-            newQueuePasien.statusBayarObat = false
+            newQueuePasien.statusBayarObat = 'pending' as Status
             newQueuePasien.statusAmbilObat = false
             newQueuePasien.timeQueueStart = timeNow
             newQueuePasien.timePangilPerawat = timeNow
@@ -113,13 +113,10 @@ export default class PasiensController {
               message : `Tambah nomor antrian berhasil`,
             })
 
-
-          // else condition where pasien data not found
-          } 
         } catch(error) {
           console.log(error)
-          if(error.status === 422){
-            throw new ValidationException(error.messages)
+          if (error.status === 404) {
+            throw new DataNotFoundException('Data pasien tidak ditemukan!')
           }
         }
       }
@@ -164,7 +161,7 @@ export default class PasiensController {
           newQueuePasien.perawatId = addPasienHeader.perawatId
           newQueuePasien.statusPanggilPerawat = false
           newQueuePasien.statusPeriksa = 'pending' as Status
-          newQueuePasien.statusBayarObat = false
+          newQueuePasien.statusBayarObat = 'pending' as Status
           newQueuePasien.statusAmbilObat = false
           newQueuePasien.timeQueueStart = timeNow
           newQueuePasien.timePangilPerawat = timeNow
@@ -179,6 +176,35 @@ export default class PasiensController {
           console.log(error)
           if(error.status === 422){
             throw new ValidationException(error.messages)
+          }
+        }
+      }
+
+      async assignDokter({request, response, auth, params}: HttpContext) {
+        try {
+          // param queue_id, dokter_id
+          const data = await request.validateUsing(assignDokterValidator)
+          const queueData = await QueuePasien.findOrFail(params.id)
+          console.log(queueData)
+          if(queueData.dokterId != undefined) {
+            return response.badRequest({
+              code: 400,
+              message: `Pasien dengan queue ${queueData.queueNumber} sudah memiliki dokter`
+            })
+          } 
+          queueData.dokterId = data.dokterId
+          queueData.statusPanggilPerawat = true
+          queueData.timePangilPerawat = DateTime.now()
+          await queueData.save()
+
+          // save transaction header
+
+          return response.ok({message: `Berhasil assign dokter ke pasien dengan antrian ${queueData.queueNumber}`})
+
+        } catch (error) {
+          console.log(error)
+          if (error.status === 404) {
+            throw new DataNotFoundException('Data queue tidak ditemukan!')
           }
         }
       }

@@ -22,7 +22,7 @@ export default class QueuePasien extends BaseModel {
   declare statusBayar: Status
   
   @column()
-  declare statusBayarObat: boolean
+  declare statusBayarObat: Status
   
   @column()
   declare statusAmbilObat: boolean
