@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import skipData from '../helpers/pagination.js';
 import db from '@adonisjs/lucid/services/db';
-import { addPasienValidator } from '#validators/pasien';
+import { addPasienValidator, startPeriksaValidator } from '#validators/pasien';
 import Pasien from '#models/pasien';
 import { Gender } from '../enums/gender_enum.js';
 import idConverter from '../helpers/id_converter.js';
@@ -64,7 +64,7 @@ export default class PasiensController {
             newPasienData.clinicId = auth.user!.clinicId
             await newPasienData.save()
 
-            newPasienData.noRm = `RM/${registerDate.year}${registerDate.month}${registerDate.day}/${idConverter(newPasienData.id)}`
+            newPasienData.noRm = `RM${idConverter(newPasienData.id).padStart(6, '0')}`
             await newPasienData.save()
 
             console.log(data)
@@ -180,7 +180,7 @@ export default class PasiensController {
         }
       }
 
-      async assignDokter({request, response, auth, params}: HttpContext) {
+      async assignDokter({request, response, params}: HttpContext) {
         try {
           // param queue_id, dokter_id
           const data = await request.validateUsing(assignDokterValidator)
@@ -192,12 +192,17 @@ export default class PasiensController {
               message: `Pasien dengan queue ${queueData.queueNumber} sudah memiliki dokter`
             })
           } 
+          // save pasien table
           queueData.dokterId = data.dokterId
           queueData.statusPanggilPerawat = true
           queueData.timePangilPerawat = DateTime.now()
           await queueData.save()
 
           // save transaction header
+          const pasienTransHeader = await PasienTransactionHeader.findOrFail(params.id)
+          pasienTransHeader.dokterId = data.dokterId
+          await pasienTransHeader.save()
+
 
           return response.ok({message: `Berhasil assign dokter ke pasien dengan antrian ${queueData.queueNumber}`})
 
@@ -206,6 +211,25 @@ export default class PasiensController {
           if (error.status === 404) {
             throw new DataNotFoundException('Data queue tidak ditemukan!')
           }
+        }
+      }
+
+      async startPeriksa({request, response, params}: HttpContext) {
+        try {
+          // params queue id
+          const data = await request.validateUsing(startPeriksaValidator)
+          const queueData = await QueuePasien.findOrFail(params.id)
+          queueData.statusPeriksa = data.statusPeriksa as Status
+          await queueData.save()
+
+          return response.ok({
+            status: "SUCCESS",
+            message: `Pasien dengan antrian ${queueData.queueNumber} mulai diperiksa!`
+          })
+        } catch (error) {
+          if (error.status === 404) {
+            throw new DataNotFoundException('Data queue tidak ditemukan!')
+          } 
         }
       }
 }

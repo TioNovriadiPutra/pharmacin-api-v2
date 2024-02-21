@@ -8,6 +8,7 @@ const DrugsController = () => import('#controllers/drugs_controller')
 const TransactionsController = () => import('#controllers/transactions_controller')
 const DrugStocksController = () => import('#controllers/drug_stocks_controller')
 const PasiensController = () => import('#controllers/pasiens_controller')
+const DokterController = () => import('#controllers/dokters_controller')
 
 router.get('/', async () => {
   return {
@@ -109,6 +110,8 @@ router
     router
     .group(() => {
       router.post('/', [PasiensController, 'pasienQueue'])
+      router.put('/:id/assign', [PasiensController, 'assignDokter'])
+      router.put('/:id/start', [PasiensController, 'startPeriksa'])
     })
     .prefix('/queue')
     router.get('/', [PasiensController, 'getPasien'])
@@ -121,3 +124,13 @@ router
       guards: ['api'],
     })
   )
+
+router.group(() => {
+  router.get('/', [DokterController, 'getDokterData'])
+})
+.prefix('/dokter')
+.use(
+  middleware.auth({
+    guards: ['api'],
+  })
+)
