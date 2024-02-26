@@ -34,7 +34,7 @@ export default class QueuePasien extends BaseModel {
   declare timeQueueEnd: DateTime
 
   @column.dateTime()
-  declare timePangilPerawat: DateTime
+  declare timePanggilPerawat: DateTime
 
   @column.dateTime()
   declare timePeriksa: DateTime

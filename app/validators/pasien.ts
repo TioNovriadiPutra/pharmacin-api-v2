@@ -24,8 +24,33 @@ export const addPasienValidator = vine.compile(
     })
 )
 
-export const startPeriksa = vine.compile(
+export const startPeriksaValidator = vine.compile(
     vine.object({
         statusPeriksa: vine.enum(['pending', 'ongoing', 'done'])
+    })
+)
+
+export const addPasienAndQueueValidator = vine.compile(
+    vine.object({
+        namaPasien: vine.string().alpha({
+            allowSpaces: true,
+            allowDashes: false,
+            allowUnderscores: false,
+        }),
+        nikPasien: vine.number(),
+        alamatPasien: vine.string(),
+        gender: vine.enum(['male', 'female']),
+        jenisPekerjaan: vine.string(),
+        tempatLahir: vine.string(),
+        tanggalLahir: vine.date({
+            formats: ['DD/MM/YYYY']
+        }),
+        noHp: vine.string().mobile(() => {
+            return {
+                locale: ['id-ID']
+            }
+        }),
+        alergiObat: vine.string().optional(),
+        dokterId: vine.number()
     })
 )

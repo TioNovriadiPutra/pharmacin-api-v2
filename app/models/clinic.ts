@@ -7,6 +7,7 @@ import DrugCategory from './drug_category.js'
 import Drug from './drug.js'
 import PurchaseTransaction from './purchase_transaction.js'
 import Pasien from './pasien.js'
+import PasienTransactionHeader from './pasien_transaction_header.js'
 
 export default class Clinic extends BaseModel {
   @column({ isPrimary: true })
@@ -46,4 +47,7 @@ export default class Clinic extends BaseModel {
 
   @hasMany(() => Pasien)
   declare pasiens: HasMany<typeof Pasien>
+
+  @hasMany(() => PasienTransactionHeader)
+  declare pasienTransactions: HasMany<typeof PasienTransactionHeader>
 }
