@@ -107,18 +107,25 @@ router
 
 router
   .group(() => {
-    router
-    .group(() => {
-      router.post('/', [PasiensController, 'pasienQueue'])
-      router.put('/:id/assign', [PasiensController, 'assignDokter'])
-      router.put('/:id/start', [PasiensController, 'startPeriksa'])
-    })
-    .prefix('/queue')
+    
     router.get('/', [PasiensController, 'getPasien'])
     router.post('/', [PasiensController, 'addPasienData'])
-    router.post('/add', [PasiensController, 'addPasienAndQueue'])
+    router.post('/queue', [PasiensController, 'addPasienAndQueue'])
   })
   .prefix('/pasien')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+  router
+  .group(() => {
+    router.post('/:id', [PasiensController, 'pasienQueue'])
+    router.put('/:id/assign', [PasiensController, 'assignDokter'])
+    router.put('/:id/start', [PasiensController, 'startPeriksa'])
+  })
+  .prefix('/queue')
   .use(
     middleware.auth({
       guards: ['api'],

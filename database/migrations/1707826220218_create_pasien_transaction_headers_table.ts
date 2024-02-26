@@ -7,6 +7,7 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').primary()
 
+      table.integer('clinic_id').unsigned().references('id').inTable('clinics').notNullable().onDelete('CASCADE')
       table.integer('pasien_id').unsigned().references('id').inTable('pasiens').notNullable().onDelete('CASCADE')
       // ongoing
       table.integer('dokter_id').unsigned().references('id').inTable('users').notNullable().onDelete('CASCADE')

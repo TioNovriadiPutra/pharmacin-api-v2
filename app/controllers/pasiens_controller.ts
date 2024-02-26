@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import skipData from '../helpers/pagination.js';
 import db from '@adonisjs/lucid/services/db';
-import { addPasienValidator, startPeriksaValidator } from '#validators/pasien';
+import { addPasienValidator, startPeriksaValidator, addPasienAndQueueValidator } from '#validators/pasien';
 import Pasien from '#models/pasien';
 import { Gender } from '../enums/gender_enum.js';
 import idConverter from '../helpers/id_converter.js';
@@ -64,7 +64,7 @@ export default class PasiensController {
             newPasienData.clinicId = auth.user!.clinicId
             await newPasienData.save()
 
-            newPasienData.noRm = `RM${idConverter(newPasienData.id).padStart(6, '0')}`
+            newPasienData.noRm = `RM${newPasienData.id.toString().padStart(6, '0')}`
             await newPasienData.save()
 
             console.log(data)
@@ -78,17 +78,17 @@ export default class PasiensController {
         }
       }
 
-      async pasienQueue({request, response, auth}: HttpContext) {
+      async pasienQueue({request, response, auth, params}: HttpContext) {
         try {
-          const pasienData = await Pasien.findOrFail(request.id)
+          const pasienData = await Pasien.findOrFail(params.id)
           let queue_number = 0
           const timeNow = DateTime.now()
 
             const addPasienHeader = new PasienTransactionHeader()
+            addPasienHeader.clinicId = auth.user!.clinicId
             addPasienHeader.pasienId = pasienData.id
             addPasienHeader.dokterId = 0
             addPasienHeader.perawatId = 0
-            addPasienHeader.clinicId = auth.user!.clinicId
             addPasienHeader.noRm = pasienData.noRm
             addPasienHeader.noRegistrasi = "1"
             await addPasienHeader.save()
@@ -104,9 +104,9 @@ export default class PasiensController {
             newQueuePasien.statusBayarObat = 'pending' as Status
             newQueuePasien.statusAmbilObat = false
             newQueuePasien.timeQueueStart = timeNow
-            newQueuePasien.timePangilPerawat = timeNow
-            newQueuePasien.timePeriksa = timeNow
-            newQueuePasien.timeQueueEnd = timeNow
+            newQueuePasien.timePanggilPerawat = null
+            newQueuePasien.timePeriksa = null
+            newQueuePasien.timeQueueEnd = null
             await newQueuePasien.save()
             
             return response.ok({
@@ -123,7 +123,7 @@ export default class PasiensController {
 
       async addPasienAndQueue({request, response, auth}: HttpContext) {
         try {
-          const data = await request.validateUsing(addPasienValidator)
+          const data = await request.validateUsing(addPasienAndQueueValidator)
 
           let queue_number = 0
           const timeNow = DateTime.now()
@@ -141,18 +141,17 @@ export default class PasiensController {
           newPasienData.clinicId = auth.user!.clinicId
           await newPasienData.save()
 
-          newPasienData.noRm = `RM/${timeNow.year}${timeNow.month}${timeNow.day}/${idConverter(newPasienData.id)}`
+          newPasienData.noRm = `RM${idConverter(newPasienData.id).padStart(6, '0')}`
           await newPasienData.save()
 
           const addPasienHeader = new PasienTransactionHeader()
-          addPasienHeader.pasienId = newPasienData.id
-          addPasienHeader.dokterId = 0
-          addPasienHeader.perawatId = 0
           addPasienHeader.clinicId = auth.user!.clinicId
+          addPasienHeader.pasienId = newPasienData.id
+          addPasienHeader.dokterId = data.dokterId
+          addPasienHeader.perawatId = auth.user!.id
           addPasienHeader.noRm = newPasienData.noRm
           addPasienHeader.noRegistrasi = "1"
           await addPasienHeader.save()
-          queue_number += 1
           
           const newQueuePasien = new QueuePasien()
           newQueuePasien.queueNumber =  queue_number
@@ -163,8 +162,8 @@ export default class PasiensController {
           newQueuePasien.statusPeriksa = 'pending' as Status
           newQueuePasien.statusBayarObat = 'pending' as Status
           newQueuePasien.statusAmbilObat = false
+          newQueuePasien.timePanggilPerawat = timeNow
           newQueuePasien.timeQueueStart = timeNow
-          newQueuePasien.timePangilPerawat = timeNow
           newQueuePasien.timePeriksa = timeNow
           newQueuePasien.timeQueueEnd = timeNow
           await newQueuePasien.save()
@@ -195,7 +194,7 @@ export default class PasiensController {
           // save pasien table
           queueData.dokterId = data.dokterId
           queueData.statusPanggilPerawat = true
-          queueData.timePangilPerawat = DateTime.now()
+          queueData.timePanggilPerawat = DateTime.now()
           await queueData.save()
 
           // save transaction header
