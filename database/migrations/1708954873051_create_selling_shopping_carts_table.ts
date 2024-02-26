@@ -11,6 +11,7 @@ export default class extends BaseSchema {
       table.integer('item_name')
       table.integer('item_price')
       table.integer('item_qty')
+      table.integer('subtotal')
 
       table.timestamp('created_at').notNullable().defaultTo(this.now())
       table.timestamp('updated_at').notNullable().defaultTo(this.now())
