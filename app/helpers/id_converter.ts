@@ -1,5 +1,5 @@
-const idConverter = (id: number) => {
-  const finalId: String = `${id.toString().padStart(4, '0')}`
+const idConverter = (id: number, length: number = 4) => {
+  const finalId: String = `${id.toString().padStart(length, '0')}`
 
   return finalId
 }

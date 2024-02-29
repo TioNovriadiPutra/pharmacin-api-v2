@@ -91,6 +91,7 @@ export default class DrugFactoriesController {
                 "drug_generic_name", d.drug_generic_name,
                 "category_name", dc.category_name,
                 "purchase_price", d.purchase_price,
+                "selling_price", d.selling_price,
                 "total_stock", d.total_stock
               )
             ),

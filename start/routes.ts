@@ -7,8 +7,6 @@ const DrugFactoriesController = () => import('#controllers/drug_factories_contro
 const DrugsController = () => import('#controllers/drugs_controller')
 const TransactionsController = () => import('#controllers/transactions_controller')
 const DrugStocksController = () => import('#controllers/drug_stocks_controller')
-const PasiensController = () => import('#controllers/pasiens_controller')
-const DokterController = () => import('#controllers/dokters_controller')
 
 router.get('/', async () => {
   return {
@@ -42,7 +40,7 @@ router
 router
   .group(() => {
     router.get('/', [DrugFactoriesController, 'getFactories'])
-    router.get('/:id', [DrugFactoriesController, 'getFactoryDetail'])
+    router.get('/partnership/:id', [DrugFactoriesController, 'getFactoryDetail'])
     router.post('/partnership', [DrugFactoriesController, 'addDrugFactory'])
     router.delete('/partnership/:id', [DrugFactoriesController, 'deleteFactory'])
   })
@@ -104,40 +102,3 @@ router
       guards: ['api'],
     })
   )
-
-router
-  .group(() => {
-    
-    router.get('/', [PasiensController, 'getPasien'])
-    router.post('/', [PasiensController, 'addPasienData'])
-    router.post('/queue', [PasiensController, 'addPasienAndQueue'])
-  })
-  .prefix('/pasien')
-  .use(
-    middleware.auth({
-      guards: ['api'],
-    })
-  )
-
-  router
-  .group(() => {
-    router.post('/:id', [PasiensController, 'pasienQueue'])
-    router.put('/:id/assign', [PasiensController, 'assignDokter'])
-    router.put('/:id/start', [PasiensController, 'startPeriksa'])
-  })
-  .prefix('/queue')
-  .use(
-    middleware.auth({
-      guards: ['api'],
-    })
-  )
-
-router.group(() => {
-  router.get('/', [DokterController, 'getDokterData'])
-})
-.prefix('/dokter')
-.use(
-  middleware.auth({
-    guards: ['api'],
-  })
-)
