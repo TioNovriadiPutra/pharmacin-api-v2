@@ -5,17 +5,21 @@ import db from '@adonisjs/lucid/services/db'
 export default class UsersController {
   async getUserProfile({ response, auth }: HttpContext) {
     try {
-      const profileData = await db
-        .from('users')
-        .join('profiles', 'profiles.user_id', '=', 'users.id')
-        .join('roles', 'roles.id', '=', 'users.role_id')
-        .select('users.id', 'profiles.full_name', 'roles.role_name')
-        .where('users.id', auth.user!.id)
-        .firstOrFail()
+      const profileData = await db.rawQuery(
+        `SELECT
+          u.id,
+          p.full_name,
+          r.role_name
+         FROM users u
+         JOIN roles r ON u.role_id = r.id
+         JOIN profiles p ON u.id = p.user_id
+         WHERE u.id = ?`,
+        [auth.user!.id]
+      )
 
       return response.ok({
         message: 'Data fetched!',
-        data: profileData,
+        data: profileData[0][0],
       })
     } catch (error) {
       if (error.status === 404) {

@@ -39,4 +39,7 @@ vine.messagesProvider = new SimpleMessagesProvider({
   'quantity.number': 'Qty harus berisi angka!',
   'purchaseItems.required': 'Keranjang pembelian harus diisi!',
   'purchaseItems.array.minLength': 'Keranjang pembelian harus minimal 1!',
+  'specialityId.required': 'Spesialisasi harus diisi!',
+  'address.required': 'Alamat harus diisi!',
+  'doctorId.required': 'Dokter harus dipilih!',
 })

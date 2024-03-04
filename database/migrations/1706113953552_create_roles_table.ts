@@ -24,6 +24,14 @@ export default class extends BaseSchema {
             id: Role.NURSE,
             role_name: 'Perawat',
           },
+          {
+            id: Role.DOCTOR_ASSISTANT,
+            role_name: 'Asisten Dokter',
+          },
+          {
+            id: Role.ADMINISTRATOR,
+            role_name: 'Administrator',
+          },
         ])
       })
     })

@@ -7,8 +7,9 @@ const DrugFactoriesController = () => import('#controllers/drug_factories_contro
 const DrugsController = () => import('#controllers/drugs_controller')
 const TransactionsController = () => import('#controllers/transactions_controller')
 const DrugStocksController = () => import('#controllers/drug_stocks_controller')
-const PasiensController = () => import('#controllers/pasiens_controller')
-const DokterController = () => import('#controllers/dokters_controller')
+const PatientsController = () => import('#controllers/patients_controller')
+const QueueController = () => import('#controllers/queues_controller')
+const DoctorsController = () => import('#controllers/doctors_controller')
 
 router.get('/', async () => {
   return {
@@ -22,9 +23,35 @@ router
     router
       .group(() => {
         router.post('/admin', [AuthController, 'registerAdmin'])
+        router.post('/doctor', [AuthController, 'registerDoctor']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
+        router.post('/assistant', [AuthController, 'registerDoctorAssistant']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
+        router.post('/employee', [AuthController, 'registerEmployee']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
+        router.post('/administrator', [AuthController, 'registerAdministrator']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
       })
       .prefix('/register')
-    router.post('/login', [AuthController, 'login'])
+    router.get('/logout', [AuthController, 'logout']).use(
+      middleware.auth({
+        guards: ['api'],
+      })
+    )
+    router.post('/login/desktop', [AuthController, 'loginDesktop'])
+    router.post('/login/mobile', [AuthController, 'loginMobile'])
   })
   .prefix('/auth')
 
@@ -42,7 +69,7 @@ router
 router
   .group(() => {
     router.get('/', [DrugFactoriesController, 'getFactories'])
-    router.get('/:id', [DrugFactoriesController, 'getFactoryDetail'])
+    router.get('/partnership/:id', [DrugFactoriesController, 'getFactoryDetail'])
     router.post('/partnership', [DrugFactoriesController, 'addDrugFactory'])
     router.delete('/partnership/:id', [DrugFactoriesController, 'deleteFactory'])
   })
@@ -107,23 +134,23 @@ router
 
 router
   .group(() => {
-    
-    router.get('/', [PasiensController, 'getPasien'])
-    router.post('/', [PasiensController, 'addPasienData'])
-    router.post('/queue', [PasiensController, 'addPasienAndQueue'])
+    router.get('/', [PatientsController, 'getPatients'])
+    router.get('/queue', [PatientsController, 'getQueuingPatients'])
+    router.post('/', [PatientsController, 'addPatient'])
+    router.post('/queue/:id', [PatientsController, 'addPatientQueue'])
   })
-  .prefix('/pasien')
+  .prefix('/patient')
   .use(
     middleware.auth({
       guards: ['api'],
     })
   )
 
-  router
+router
   .group(() => {
-    router.post('/:id', [PasiensController, 'pasienQueue'])
-    router.put('/:id/assign', [PasiensController, 'assignDokter'])
-    router.put('/:id/start', [PasiensController, 'startPeriksa'])
+    router.get('/consult-wait', [QueueController, 'getConsultWaitQueue'])
+    router.patch('/consult-wait/:id', [QueueController, 'changeStatusToConsultingQueue'])
+    router.delete('/cancel/:id', [QueueController, 'cancelQueue'])
   })
   .prefix('/queue')
   .use(
@@ -132,12 +159,13 @@ router
     })
   )
 
-router.group(() => {
-  router.get('/', [DokterController, 'getDokterData'])
-})
-.prefix('/dokter')
-.use(
-  middleware.auth({
-    guards: ['api'],
+router
+  .group(() => {
+    router.get('/', [DoctorsController, 'getDoctors'])
   })
-)
+  .prefix('/doctor')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
