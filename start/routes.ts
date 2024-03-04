@@ -7,6 +7,9 @@ const DrugFactoriesController = () => import('#controllers/drug_factories_contro
 const DrugsController = () => import('#controllers/drugs_controller')
 const TransactionsController = () => import('#controllers/transactions_controller')
 const DrugStocksController = () => import('#controllers/drug_stocks_controller')
+const PatientsController = () => import('#controllers/patients_controller')
+const QueueController = () => import('#controllers/queues_controller')
+const DoctorsController = () => import('#controllers/doctors_controller')
 
 router.get('/', async () => {
   return {
@@ -20,9 +23,35 @@ router
     router
       .group(() => {
         router.post('/admin', [AuthController, 'registerAdmin'])
+        router.post('/doctor', [AuthController, 'registerDoctor']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
+        router.post('/assistant', [AuthController, 'registerDoctorAssistant']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
+        router.post('/employee', [AuthController, 'registerEmployee']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
+        router.post('/administrator', [AuthController, 'registerAdministrator']).use(
+          middleware.auth({
+            guards: ['api'],
+          })
+        )
       })
       .prefix('/register')
-    router.post('/login', [AuthController, 'login'])
+    router.get('/logout', [AuthController, 'logout']).use(
+      middleware.auth({
+        guards: ['api'],
+      })
+    )
+    router.post('/login/desktop', [AuthController, 'loginDesktop'])
+    router.post('/login/mobile', [AuthController, 'loginMobile'])
   })
   .prefix('/auth')
 
@@ -97,6 +126,44 @@ router
     router.get('/', [DrugStocksController, 'getStocks'])
   })
   .prefix('/stock')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [PatientsController, 'getPatients'])
+    router.get('/queue', [PatientsController, 'getQueuingPatients'])
+    router.post('/', [PatientsController, 'addPatient'])
+    router.post('/queue/:id', [PatientsController, 'addPatientQueue'])
+  })
+  .prefix('/patient')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/consult-wait', [QueueController, 'getConsultWaitQueue'])
+    router.patch('/consult-wait/:id', [QueueController, 'changeStatusToConsultingQueue'])
+    router.delete('/cancel/:id', [QueueController, 'cancelQueue'])
+  })
+  .prefix('/queue')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [DoctorsController, 'getDoctors'])
+  })
+  .prefix('/doctor')
   .use(
     middleware.auth({
       guards: ['api'],

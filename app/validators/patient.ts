@@ -21,3 +21,9 @@ export const addPatientValidator = vine.compile(
     dob: vine.string(),
   })
 )
+
+export const patientQueueValidator = vine.compile(
+  vine.object({
+    doctorId: vine.number(),
+  })
+)

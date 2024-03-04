@@ -13,5 +13,7 @@
 */
 
 export const policies = {
+  PatientPolicy: () => import('#policies/patient_policy'),
+  QueuePolicy: () => import('#policies/queue_policy'),
   AuthPolicy: () => import('#policies/auth_policy'),
 }

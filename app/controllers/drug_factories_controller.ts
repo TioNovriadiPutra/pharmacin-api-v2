@@ -89,6 +89,7 @@ export default class DrugFactoriesController {
                 "created_at", DATE_FORMAT(d.created_at, "%Y-%m-%d"),
                 "drug", d.drug,
                 "drug_generic_name", d.drug_generic_name,
+                "dose", d.dose,
                 "category_name", dc.category_name,
                 "purchase_price", d.purchase_price,
                 "selling_price", d.selling_price,

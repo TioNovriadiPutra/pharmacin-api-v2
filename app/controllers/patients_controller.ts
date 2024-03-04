@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import skipData from '../helpers/pagination.js'
 import db from '@adonisjs/lucid/services/db'
-import { addPatientValidator } from '#validators/patient'
+import { addPatientValidator, patientQueueValidator } from '#validators/patient'
 import Patient from '#models/patient'
 import { Gender } from '../enums/gender_enum.js'
 import Occupation from '#models/occupation'
@@ -9,6 +9,10 @@ import ValidationException from '#exceptions/validation_exception'
 import { DateTime } from 'luxon'
 import idConverter from '../helpers/id_converter.js'
 import DataNotFoundException from '#exceptions/data_not_found_exception'
+import Queue from '#models/queue'
+import ForbiddenException from '#exceptions/forbidden_exception'
+import moment from 'moment'
+import getRandomNumId from '../helpers/random_num.js'
 
 export default class PatientsController {
   async getPatients({ request, response, auth }: HttpContext) {
@@ -19,18 +23,21 @@ export default class PatientsController {
 
     const patientData = await db.rawQuery(
       `SELECT
-          full_name,
-          record_number,
-          phone,
-          address,
-          gender,
-          DATE_FORMAT(dob, "%Y-%m-%d") AS date_birth,
-          ready
-        FROM patients 
-        WHERE clinic_id = ?
-        AND (full_name LIKE ? OR nik LIKE ? OR record_number LIKE ?)
-        LIMIT ?
-        OFFSET ?`,
+        id,
+        full_name,
+        record_number,
+        phone,
+        address,
+        CASE
+          WHEN gender = 'male' THEN 'Laki-laki'
+          WHEN gender = 'female' THEN 'Perempuan'
+        END AS gender,
+        DATE_FORMAT(dob, "%Y-%m-%d") AS date_birth,
+        ready
+       FROM patients 
+       WHERE clinic_id = ? AND (full_name LIKE ? OR nik LIKE ? OR record_number LIKE ?)
+       ORDER BY full_name ASC
+       LIMIT ? OFFSET ?`,
       [auth.user!.clinicId, search, search, search, perPage, skipData(page, perPage)]
     )
 
@@ -40,8 +47,44 @@ export default class PatientsController {
     })
   }
 
-  async addPatient({ request, response, auth }: HttpContext) {
+  async getQueuingPatients({ response, auth, bouncer }: HttpContext) {
+    const patientData = await db.rawQuery(
+      `SELECT
+        q.id,
+        q.registration_number,
+        p.full_name,
+        p.record_number,
+        CASE
+          WHEN p.gender = 'male' THEN 'Laki-laki'
+          WHEN p.gender = 'female' THEN 'Perempuan'
+        END AS gender,
+        DATE_FORMAT(q.created_at, "%Y-%m-%d") AS created_at,
+        CASE
+          WHEN q.status = 'consult-wait' THEN 'Belum Dipanggil'
+          WHEN q.status = 'consulting' THEN 'Sudah Dipanggil'
+          WHEN q.status = 'drug-wait' THEN 'Menunggu Obat'
+          WHEN q.status = 'drug-pick-up' THEN 'Obat diserahkan'
+          ELSE 'selesai'
+        END as status
+       FROM patients p
+       JOIN queues q ON p.id = q.patient_id
+       WHERE p.ready = 0 AND p.clinic_id = ?
+       ORDER BY q.created_at ASC`,
+      [auth.user!.clinicId]
+    )
+
+    return response.ok({
+      message: 'Data fetched!',
+      data: patientData[0],
+    })
+  }
+
+  async addPatient({ request, response, auth, bouncer }: HttpContext) {
     try {
+      if (await bouncer.with('PatientPolicy').denies('addPatient')) {
+        throw new ForbiddenException()
+      }
+
       const data = await request.validateUsing(addPatientValidator)
 
       const occupationData = await Occupation.findOrFail(data.occupationId)
@@ -72,108 +115,41 @@ export default class PatientsController {
         throw new ValidationException(error.messages)
       } else if (error.status === 404) {
         throw new DataNotFoundException('Jenis pekerjaan tidak ditemukan!')
+      } else if (error.status === 403) {
+        throw error
       }
     }
   }
 
-  // async pasienQueue({ request, response, auth }: HttpContext) {
-  //   try {
-  //     const pasienData = await Pasien.findOrFail(request.id)
-  //     let queue_number = 0
-  //     const timeNow = DateTime.now()
+  async addPatientQueue({ request, response, auth, params, bouncer }: HttpContext) {
+    try {
+      if (await bouncer.with('QueuePolicy').denies('addPatientQueue')) {
+        throw new ForbiddenException()
+      }
 
-  //     const addPasienHeader = new PasienTransactionHeader()
-  //     addPasienHeader.pasienId = pasienData.id
-  //     addPasienHeader.dokterId = 0
-  //     addPasienHeader.perawatId = 0
-  //     addPasienHeader.clinicId = auth.user!.clinicId
-  //     addPasienHeader.noRm = pasienData.noRm
-  //     addPasienHeader.noRegistrasi = '1'
-  //     await addPasienHeader.save()
-  //     queue_number += 1
+      const data = await request.validateUsing(patientQueueValidator)
 
-  //     const newQueuePasien = new QueuePasien()
-  //     newQueuePasien.queueNumber = queue_number
-  //     newQueuePasien.transactionId = addPasienHeader.id
-  //     newQueuePasien.dokterId = addPasienHeader.dokterId
-  //     newQueuePasien.perawatId = addPasienHeader.perawatId
-  //     newQueuePasien.statusPanggilPerawat = false
-  //     newQueuePasien.statusPeriksa = 'pending' as Status
-  //     newQueuePasien.statusBayarObat = false
-  //     newQueuePasien.statusAmbilObat = false
-  //     newQueuePasien.timeQueueStart = timeNow
-  //     newQueuePasien.timePangilPerawat = timeNow
-  //     newQueuePasien.timePeriksa = timeNow
-  //     newQueuePasien.timeQueueEnd = timeNow
-  //     await newQueuePasien.save()
+      const patientData = await Patient.findOrFail(params.id)
+      patientData.ready = false
 
-  //     return response.ok({
-  //       message: `Tambah nomor antrian berhasil`,
-  //     })
-  //   } catch (error) {
-  //     console.log(error)
-  //     if (error.status === 422) {
-  //       throw new ValidationException(error.messages)
-  //     }
-  //   }
-  // }
+      const newQueue = new Queue()
+      newQueue.doctorId = data.doctorId
+      newQueue.clinicId = auth.user!.clinicId
+      newQueue.registrationNumber = `REG/${moment().format('YYYYMMDD')}/${getRandomNumId(4)}`
 
-  // async addPasienAndQueue({ request, response, auth }: HttpContext) {
-  //   try {
-  //     const data = await request.validateUsing(addPasienValidator)
+      await patientData.related('queue').save(newQueue)
 
-  //     let queue_number = 0
-  //     const timeNow = DateTime.now()
-
-  //     const newPasienData = new Pasien()
-  //     newPasienData.namaPasien = data.namaPasien
-  //     newPasienData.nikPasien = data.nikPasien
-  //     newPasienData.alamatPasien = data.alamatPasien
-  //     newPasienData.gender = data.gender as Gender
-  //     newPasienData.occupation = data.jenisPekerjaan
-  //     newPasienData.tempatLahirPasien = data.tempatLahir
-  //     newPasienData.tanggalLahirPasien = data.tanggalLahir
-  //     newPasienData.noHp = data.noHp
-  //     newPasienData.alergiObat = data.alergiObat
-  //     newPasienData.clinicId = auth.user!.clinicId
-  //     await newPasienData.save()
-
-  //     newPasienData.noRm = `RM/${timeNow.year}${timeNow.month}${timeNow.day}/${idConverter(newPasienData.id)}`
-  //     await newPasienData.save()
-
-  //     const addPasienHeader = new PasienTransactionHeader()
-  //     addPasienHeader.pasienId = newPasienData.id
-  //     addPasienHeader.dokterId = 0
-  //     addPasienHeader.perawatId = 0
-  //     addPasienHeader.clinicId = auth.user!.clinicId
-  //     addPasienHeader.noRm = newPasienData.noRm
-  //     addPasienHeader.noRegistrasi = '1'
-  //     await addPasienHeader.save()
-  //     queue_number += 1
-
-  //     const newQueuePasien = new QueuePasien()
-  //     newQueuePasien.queueNumber = queue_number
-  //     newQueuePasien.transactionId = addPasienHeader.id
-  //     newQueuePasien.dokterId = addPasienHeader.dokterId
-  //     newQueuePasien.perawatId = addPasienHeader.perawatId
-  //     newQueuePasien.statusPanggilPerawat = false
-  //     newQueuePasien.statusPeriksa = 'pending' as Status
-  //     newQueuePasien.statusBayarObat = false
-  //     newQueuePasien.statusAmbilObat = false
-  //     newQueuePasien.timeQueueStart = timeNow
-  //     newQueuePasien.timePangilPerawat = timeNow
-  //     newQueuePasien.timePeriksa = timeNow
-  //     newQueuePasien.timeQueueEnd = timeNow
-  //     await newQueuePasien.save()
-
-  //     return response.ok({
-  //       message: `Tambah nomor antrian berhasil`,
-  //     })
-  //   } catch (error) {
-  //     console.log(error)
-  //     if (error.status === 422) {
-  //       throw new ValidationException(error.messages)
-  //     }
-  //   }
-  // }
+      return response.created({
+        message: 'Pasien masuk antrian!',
+      })
+    } catch (error) {
+      if (error.status === 422) {
+        throw new ValidationException(error.messages)
+      } else if (error.status === 404) {
+        throw new DataNotFoundException('Data pasien tidak ditemukan!')
+      } else if (error.status === 403) {
+        throw error
+      }
+    }
+  }
 }
