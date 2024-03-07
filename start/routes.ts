@@ -10,6 +10,7 @@ const DrugStocksController = () => import('#controllers/drug_stocks_controller')
 const PatientsController = () => import('#controllers/patients_controller')
 const QueueController = () => import('#controllers/queues_controller')
 const DoctorsController = () => import('#controllers/doctors_controller')
+const UnitsController = () => import('#controllers/units_controller')
 
 router.get('/', async () => {
   return {
@@ -164,6 +165,20 @@ router
     router.get('/', [DoctorsController, 'getDoctors'])
   })
   .prefix('/doctor')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [UnitsController, 'getUnits'])
+    router.post('/', [UnitsController, 'addUnit'])
+    router.put('/:id', [UnitsController, 'updateUnit'])
+    router.delete('/:id', [UnitsController, 'deleteUnit'])
+  })
+  .prefix('/unit')
   .use(
     middleware.auth({
       guards: ['api'],

@@ -7,6 +7,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import idConverter from '../helpers/id_converter.js'
 import skipData from '../helpers/pagination.js'
+import Unit from '#models/unit'
 
 export default class DrugsController {
   async addDrugCategory({ request, response, auth }: HttpContext) {
@@ -104,18 +105,21 @@ export default class DrugsController {
   async addDrug({ request, response, auth }: HttpContext) {
     try {
       const data = await request.validateUsing(addDrugValidator)
-      console.log('data', data)
+
+      const unitData = await Unit.findOrFail(data.unitId)
 
       const newDrug = new Drug()
       newDrug.drug = data.drug
       newDrug.drugGenericName = data.drugGenericName
-      newDrug.dose = data.dose
+      newDrug.composition = data.composition
+      newDrug.unitName = unitData.unitName
       newDrug.shelve = data.shelve
       newDrug.purchasePrice = data.purchasePrice
       newDrug.sellingPrice = data.sellingPrice
       newDrug.drugCategoryId = data.categoryId
       newDrug.drugFactoryId = data.factoryId
       newDrug.clinicId = auth.user!.clinicId
+      newDrug.unitId = data.unitId
 
       await newDrug.save()
 
@@ -127,6 +131,8 @@ export default class DrugsController {
     } catch (error) {
       if (error.status === 422) {
         throw new ValidationException(error.messages)
+      } else if (error.status === 404) {
+        throw new DataNotFoundException('Data unit tidak ditemukan!')
       }
     }
   }
@@ -144,7 +150,7 @@ export default class DrugsController {
         drug_categories.category_name, 
         drugs.shelve, 
         drugs.selling_price, 
-        drugs.dose 
+        drugs.composition 
         FROM drugs 
         JOIN drug_categories ON drugs.drug_category_id = drug_categories.id 
         WHERE drugs.clinic_id = ?
@@ -175,15 +181,19 @@ export default class DrugsController {
     try {
       const data = await request.validateUsing(addDrugValidator)
 
+      const unitData = await Unit.findOrFail(data.unitId)
+
       const drugData = await Drug.findOrFail(params.id)
       drugData.drug = data.drug
       drugData.drugGenericName = data.drugGenericName
-      drugData.dose = data.dose
+      drugData.composition = data.composition
+      drugData.unitName = unitData.unitName
       drugData.drugCategoryId = data.categoryId
       drugData.drugFactoryId = data.factoryId
       drugData.shelve = data.shelve
       drugData.purchasePrice = data.purchasePrice
       drugData.sellingPrice = data.sellingPrice
+      drugData.unitId = data.unitId
 
       await drugData.save()
 
@@ -205,7 +215,8 @@ export default class DrugsController {
           d.drug_number,
           d.drug,
           d.drug_generic_name,
-          d.dose,
+          d.composition,
+          d.unit_name,
           d.shelve,
           d.purchase_price,
           d.selling_price,

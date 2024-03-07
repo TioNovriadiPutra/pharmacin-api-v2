@@ -42,4 +42,5 @@ vine.messagesProvider = new SimpleMessagesProvider({
   'specialityId.required': 'Spesialisasi harus diisi!',
   'address.required': 'Alamat harus diisi!',
   'doctorId.required': 'Dokter harus dipilih!',
+  'unitName.required': 'Nama satuan harus diisi!',
 })
