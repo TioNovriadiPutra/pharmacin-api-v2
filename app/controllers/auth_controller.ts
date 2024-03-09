@@ -71,6 +71,7 @@ export default class AuthController {
 
       const newDoctor = new Doctor()
       newDoctor.specialityId = data.specialityId
+      newDoctor.clinicId = auth.user!.clinicId
 
       await newUser.related('profile').save(newProfile)
       await newProfile.related('doctor').save(newDoctor)

@@ -11,6 +11,7 @@ const PatientsController = () => import('#controllers/patients_controller')
 const QueueController = () => import('#controllers/queues_controller')
 const DoctorsController = () => import('#controllers/doctors_controller')
 const UnitsController = () => import('#controllers/units_controller')
+const OccupationsController = () => import('#controllers/occupations_controller')
 
 router.get('/', async () => {
   return {
@@ -150,6 +151,7 @@ router
 router
   .group(() => {
     router.get('/consult-wait', [QueueController, 'getConsultWaitQueue'])
+    router.get('/doctor/consult-wait', [QueueController, 'getDoctorConsultWaitQueue'])
     router.patch('/consult-wait/:id', [QueueController, 'changeStatusToConsultingQueue'])
     router.delete('/cancel/:id', [QueueController, 'cancelQueue'])
   })
@@ -179,6 +181,17 @@ router
     router.delete('/:id', [UnitsController, 'deleteUnit'])
   })
   .prefix('/unit')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [OccupationsController, 'getOccupations'])
+  })
+  .prefix('/occupation')
   .use(
     middleware.auth({
       guards: ['api'],

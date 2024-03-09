@@ -5,6 +5,7 @@ import Queue from '#models/queue'
 import DataNotFoundException from '#exceptions/data_not_found_exception'
 import ForbiddenException from '#exceptions/forbidden_exception'
 import Patient from '#models/patient'
+import DoctorAssistant from '#models/doctor_assistant'
 
 export default class QueuesController {
   async getConsultWaitQueue({ response, auth }: HttpContext) {
@@ -17,16 +18,44 @@ export default class QueuesController {
         p.gender,
         q.created_at,
         q.status
-        FROM queues q
-        JOIN patients p ON q.patient_id = p.id
-        WHERE q.clinic_id = ? AND q.status = ?
-        ORDER BY q.created_at ASC`,
+       FROM queues q
+       JOIN patients p ON q.patient_id = p.id
+       WHERE q.clinic_id = ? AND q.status = ?
+       ORDER BY q.created_at ASC`,
       [auth.user!.clinicId, QueueStatus['CONSULT_WAIT']]
     )
 
     return response.ok({
       message: 'Data fetched!',
-      data: queueData[0],
+      data: { queue: queueData[0], total: queueData[0].length },
+    })
+  }
+
+  async getDoctorConsultWaitQueue({ response, auth }: HttpContext) {
+    const doctorAssistant = await DoctorAssistant.query()
+      .whereHas('profile', (builder) => {
+        builder.whereHas('user', (builder) => {
+          builder.where('id', auth.user!.id)
+        })
+      })
+      .firstOrFail()
+
+    const queueData = await db.rawQuery(
+      `SELECT
+        q.id,
+        p.full_name,
+        p.record_number,
+        q.registration_number
+       FROM queues q
+       JOIN patients p ON q.patient_id = p.id
+       WHERE q.clinic_id = ? AND q.doctor_id = ? AND q.status = ?
+       ORDER BY q.created_at ASC`,
+      [auth.user!.clinicId, doctorAssistant.doctorId, QueueStatus['CONSULT_WAIT']]
+    )
+
+    return response.ok({
+      message: 'Data fetched',
+      data: { queue: queueData[0], total: queueData[0].length },
     })
   }
 
@@ -42,7 +71,7 @@ export default class QueuesController {
       await queueData.save()
 
       return response.ok({
-        message: 'Pasien dipanggil!',
+        message: queueData.registrationNumber,
       })
     } catch (error) {
       if (error.status === 404) {

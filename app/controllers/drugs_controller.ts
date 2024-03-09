@@ -233,7 +233,7 @@ export default class DrugsController {
           FROM drugs d 
           JOIN drug_categories dc ON d.drug_category_id = dc.id 
           JOIN drug_factories df ON d.drug_factory_id = df.id
-          JOIN purchase_shopping_carts psc ON psc.drug_id = d.id
+          LEFT JOIN purchase_shopping_carts psc ON psc.drug_id = d.id
           WHERE d.id = ?`,
         [params.id]
       )

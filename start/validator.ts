@@ -29,8 +29,10 @@ vine.messagesProvider = new SimpleMessagesProvider({
   'factoryId.required': 'Pabrik harus dipilih!',
   'purchasePrice.required': 'Harga beli harus diisi!',
   'purchasePrice.number': 'Harga beli harus berisi angka!',
+  'purchasePrice.min': 'Harga beli harus diisi!',
   'sellingPrice.required': 'Harga jual harus diisi!',
   'sellingPrice.number': 'Harga jual harus berisi angka!',
+  'sellingPrice.min': 'Harga jual harus diisi!',
   'totalPrice.required': 'Harga total harus diisi!',
   'totalPrice.number': 'Harga total harus berisi angka!',
   'drugId.required': 'Obat harus dipilih!',
@@ -42,5 +44,6 @@ vine.messagesProvider = new SimpleMessagesProvider({
   'specialityId.required': 'Spesialisasi harus diisi!',
   'address.required': 'Alamat harus diisi!',
   'doctorId.required': 'Dokter harus dipilih!',
-  'unitName.required': 'Nama satuan harus diisi!',
+  'unitId.required': 'Satuan harus diisi!',
+  'composition.required': 'Komposisi harus diisi!',
 })
