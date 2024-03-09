@@ -48,8 +48,13 @@ export default class PatientsController {
   }
 
   async getQueuingPatients({ response, auth, bouncer }: HttpContext) {
-    const patientData = await db.rawQuery(
-      `SELECT
+    try {
+      if (await bouncer.with('PatientPolicy').denies('handlePatient')) {
+        throw new ForbiddenException()
+      }
+
+      const patientData = await db.rawQuery(
+        `SELECT
         q.id,
         q.registration_number,
         p.full_name,
@@ -70,18 +75,23 @@ export default class PatientsController {
        JOIN queues q ON p.id = q.patient_id
        WHERE p.ready = 0 AND p.clinic_id = ?
        ORDER BY q.created_at ASC`,
-      [auth.user!.clinicId]
-    )
+        [auth.user!.clinicId]
+      )
 
-    return response.ok({
-      message: 'Data fetched!',
-      data: patientData[0],
-    })
+      return response.ok({
+        message: 'Data fetched!',
+        data: patientData[0],
+      })
+    } catch (error) {
+      if (error.status === 403) {
+        throw error
+      }
+    }
   }
 
   async addPatient({ request, response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('PatientPolicy').denies('addPatient')) {
+      if (await bouncer.with('PatientPolicy').denies('handlePatient')) {
         throw new ForbiddenException()
       }
 

@@ -12,6 +12,7 @@ const QueueController = () => import('#controllers/queues_controller')
 const DoctorsController = () => import('#controllers/doctors_controller')
 const UnitsController = () => import('#controllers/units_controller')
 const OccupationsController = () => import('#controllers/occupations_controller')
+const ClinicsController = () => import('#controllers/clinics_controller')
 
 router.get('/', async () => {
   return {
@@ -60,8 +61,26 @@ router
 router
   .group(() => {
     router.get('/profile', [UsersController, 'getUserProfile'])
+    router
+      .group(() => {
+        router.get('/', [UsersController, 'getAdministrators'])
+        router.delete('/:id', [UsersController, 'deleteAdministrator'])
+      })
+      .prefix('/administrator')
   })
   .prefix('/user')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [ClinicsController, 'getClinicDetail'])
+    router.put('/', [ClinicsController, 'updateClinic'])
+  })
+  .prefix('/clinic')
   .use(
     middleware.auth({
       guards: ['api'],

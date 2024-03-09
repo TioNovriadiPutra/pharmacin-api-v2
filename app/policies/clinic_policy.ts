@@ -3,8 +3,8 @@ import { BasePolicy } from '@adonisjs/bouncer'
 import { AuthorizerResponse } from '@adonisjs/bouncer/types'
 import { Role } from '../enums/role_enum.js'
 
-export default class PatientPolicy extends BasePolicy {
-  handlePatient(user: User): AuthorizerResponse {
-    return user.roleId === Role['ADMINISTRATOR']
+export default class ClinicPolicy extends BasePolicy {
+  edit(user: User): AuthorizerResponse {
+    return user.roleId === Role['ADMIN']
   }
 }

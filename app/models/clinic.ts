@@ -21,7 +21,7 @@ export default class Clinic extends BaseModel {
   declare clinicPhone: string
 
   @column()
-  declare address: string
+  declare address?: string
 
   @column()
   declare paymentStatus: boolean
