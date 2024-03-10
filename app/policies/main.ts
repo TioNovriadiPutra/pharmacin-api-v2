@@ -13,6 +13,7 @@
 */
 
 export const policies = {
+  DoctorSpecialistPolicy: () => import('#policies/doctor_specialist_policy'),
   UserPolicy: () => import('#policies/user_policy'),
   ClinicPolicy: () => import('#policies/clinic_policy'),
   DoctorPolicy: () => import('#policies/doctor_policy'),

@@ -33,9 +33,9 @@ export default class QueuesController {
 
   async getDoctorConsultWaitQueue({ response, auth }: HttpContext) {
     const doctorAssistant = await DoctorAssistant.query()
-      .whereHas('profile', (builder) => {
-        builder.whereHas('user', (builder) => {
-          builder.where('id', auth.user!.id)
+      .whereHas('profile', (builderProfile) => {
+        builderProfile.whereHas('user', (builderUser) => {
+          builderUser.where('id', auth.user!.id)
         })
       })
       .firstOrFail()
@@ -61,11 +61,12 @@ export default class QueuesController {
 
   async changeStatusToConsultingQueue({ response, params, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('QueuePolicy').denies('changeStatusToConsultingQueue')) {
+      const queueData = await Queue.findOrFail(params.id)
+
+      if (await bouncer.with('QueuePolicy').denies('changeStatusToConsultingQueue', queueData)) {
         throw new ForbiddenException()
       }
 
-      const queueData = await Queue.findOrFail(params.id)
       queueData.status = QueueStatus['CONSULTING']
 
       await queueData.save()
@@ -82,9 +83,13 @@ export default class QueuesController {
     }
   }
 
-  async cancelQueue({ response, params }: HttpContext) {
+  async cancelQueue({ response, params, bouncer }: HttpContext) {
     try {
       const queueData = await Queue.findOrFail(params.id)
+
+      if (await bouncer.with('QueuePolicy').denies('cancelQueue', queueData)) {
+        throw new ForbiddenException()
+      }
 
       const patientData = await Patient.findOrFail(queueData.patientId)
       patientData.ready = true
@@ -98,6 +103,8 @@ export default class QueuesController {
     } catch (error) {
       if (error.status === 404) {
         throw new DataNotFoundException('Data antrian tidak ditemukan!')
+      } else {
+        throw error
       }
     }
   }

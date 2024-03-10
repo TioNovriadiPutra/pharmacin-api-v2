@@ -15,14 +15,19 @@ import moment from 'moment'
 import getRandomNumId from '../helpers/random_num.js'
 
 export default class PatientsController {
-  async getPatients({ request, response, auth }: HttpContext) {
-    const page = request.input('page', 1)
-    const perPage = request.input('perPage', 10)
-    const searchTerm = request.input('searchTerm', '')
-    const search = `%${searchTerm}%`
+  async getPatients({ request, response, auth, bouncer }: HttpContext) {
+    try {
+      if (await bouncer.with('PatientPolicy').denies('handlePatient')) {
+        throw new ForbiddenException()
+      }
 
-    const patientData = await db.rawQuery(
-      `SELECT
+      const page = request.input('page', 1)
+      const perPage = request.input('perPage', 10)
+      const searchTerm = request.input('searchTerm', '')
+      const search = `%${searchTerm}%`
+
+      const patientData = await db.rawQuery(
+        `SELECT
         id,
         full_name,
         record_number,
@@ -38,13 +43,16 @@ export default class PatientsController {
        WHERE clinic_id = ? AND (full_name LIKE ? OR nik LIKE ? OR record_number LIKE ?)
        ORDER BY full_name ASC
        LIMIT ? OFFSET ?`,
-      [auth.user!.clinicId, search, search, search, perPage, skipData(page, perPage)]
-    )
+        [auth.user!.clinicId, search, search, search, perPage, skipData(page, perPage)]
+      )
 
-    return response.ok({
-      message: 'Data fetched!',
-      data: patientData[0],
-    })
+      return response.ok({
+        message: 'Data fetched!',
+        data: patientData[0],
+      })
+    } catch (error) {
+      throw error
+    }
   }
 
   async getQueuingPatients({ response, auth, bouncer }: HttpContext) {
@@ -83,15 +91,13 @@ export default class PatientsController {
         data: patientData[0],
       })
     } catch (error) {
-      if (error.status === 403) {
-        throw error
-      }
+      throw error
     }
   }
 
   async addPatient({ request, response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('PatientPolicy').denies('handlePatient')) {
+      if (await bouncer.with('PatientPolicy').denies('create')) {
         throw new ForbiddenException()
       }
 
@@ -125,7 +131,7 @@ export default class PatientsController {
         throw new ValidationException(error.messages)
       } else if (error.status === 404) {
         throw new DataNotFoundException('Jenis pekerjaan tidak ditemukan!')
-      } else if (error.status === 403) {
+      } else {
         throw error
       }
     }

@@ -7,8 +7,12 @@ import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 
 export default class ClinicsController {
-  async getClinicDetail({ response, auth }: HttpContext) {
+  async getClinicDetail({ response, auth, bouncer }: HttpContext) {
     try {
+      if (await bouncer.with('ClinicPolicy').denies('view')) {
+        throw new ForbiddenException()
+      }
+
       const clinicData = await db.rawQuery(
         `SELECT
           clinic_name,
@@ -28,9 +32,7 @@ export default class ClinicsController {
         data: clinicData[0][0],
       })
     } catch (error) {
-      if (error.status === 404) {
-        throw error
-      }
+      throw error
     }
   }
 

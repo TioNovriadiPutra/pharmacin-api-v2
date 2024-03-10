@@ -13,6 +13,7 @@ const DoctorsController = () => import('#controllers/doctors_controller')
 const UnitsController = () => import('#controllers/units_controller')
 const OccupationsController = () => import('#controllers/occupations_controller')
 const ClinicsController = () => import('#controllers/clinics_controller')
+const SpecialitiesController = () => import('#controllers/doctor_specialists_controller')
 
 router.get('/', async () => {
   return {
@@ -64,6 +65,8 @@ router
     router
       .group(() => {
         router.get('/', [UsersController, 'getAdministrators'])
+        router.get('/:id', [UsersController, 'getAdministratorDetail'])
+        router.put('/:id', [UsersController, 'updateAdministrator'])
         router.delete('/:id', [UsersController, 'deleteAdministrator'])
       })
       .prefix('/administrator')
@@ -184,6 +187,9 @@ router
 router
   .group(() => {
     router.get('/', [DoctorsController, 'getDoctors'])
+    router.get('/:id', [DoctorsController, 'getDoctorDetail'])
+    router.put('/:id', [DoctorsController, 'updateDoctor'])
+    router.delete('/:id', [DoctorsController, 'deleteDoctor'])
   })
   .prefix('/doctor')
   .use(
@@ -211,6 +217,17 @@ router
     router.get('/', [OccupationsController, 'getOccupations'])
   })
   .prefix('/occupation')
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )
+
+router
+  .group(() => {
+    router.get('/', [SpecialitiesController, 'getSpecialities'])
+  })
+  .prefix('/speciality')
   .use(
     middleware.auth({
       guards: ['api'],

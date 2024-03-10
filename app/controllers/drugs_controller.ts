@@ -223,16 +223,21 @@ export default class DrugsController {
           d.total_stock,
           COUNT(psc.id) AS total_purchases,
           JSON_OBJECT(
-            "id", dc.id,
-            "category_name", dc.category_name
+            "label", dc.category_name,
+            "value", dc.id
           ) AS drug_category,
           JSON_OBJECT(
-            "id", df.id,
-            "factory_name", df.factory_name
-          ) AS drug_factory
+            "label", df.factory_name,
+            "value", df.id
+          ) AS drug_factory,
+          JSON_OBJECT(
+            "label", u.unit_name,
+            "value", u.id
+          ) AS unit
           FROM drugs d 
           JOIN drug_categories dc ON d.drug_category_id = dc.id 
           JOIN drug_factories df ON d.drug_factory_id = df.id
+          JOIN units u ON d.unit_id = u.id
           LEFT JOIN purchase_shopping_carts psc ON psc.drug_id = d.id
           WHERE d.id = ?`,
         [params.id]
@@ -245,15 +250,12 @@ export default class DrugsController {
       Object.assign(drugData[0][0], {
         drug_category: JSON.parse(drugData[0][0].drug_category),
         drug_factory: JSON.parse(drugData[0][0].drug_factory),
+        unit: JSON.parse(drugData[0][0].unit),
       })
 
       return response.ok({ message: 'Data fetched!', data: drugData[0][0] })
     } catch (error) {
-      if (error.status === 404) {
-        throw error
-      } else {
-        console.log(error)
-      }
+      throw error
     }
   }
 }
