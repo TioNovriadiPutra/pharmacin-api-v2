@@ -6,29 +6,38 @@ import DataNotFoundException from '#exceptions/data_not_found_exception'
 import ForbiddenException from '#exceptions/forbidden_exception'
 import Patient from '#models/patient'
 import DoctorAssistant from '#models/doctor_assistant'
+import Doctor from '#models/doctor'
 
 export default class QueuesController {
-  async getConsultWaitQueue({ response, auth }: HttpContext) {
-    const queueData = await db.rawQuery(
-      `SELECT
-        q.id,
-        q.registration_number,
-        p.full_name,
-        p.record_number,
-        p.gender,
-        q.created_at,
-        q.status
-       FROM queues q
-       JOIN patients p ON q.patient_id = p.id
-       WHERE q.clinic_id = ? AND q.status = ?
-       ORDER BY q.created_at ASC`,
-      [auth.user!.clinicId, QueueStatus['CONSULT_WAIT']]
-    )
+  async getConsultWaitQueue({ response, auth, bouncer }: HttpContext) {
+    try {
+      if (await bouncer.with('QueuePolicy').denies('view')) {
+        throw new ForbiddenException()
+      }
 
-    return response.ok({
-      message: 'Data fetched!',
-      data: { queue: queueData[0], total: queueData[0].length },
-    })
+      const queueData = await db.rawQuery(
+        `SELECT
+          q.id,
+          q.registration_number,
+          p.full_name,
+          p.record_number,
+          p.gender,
+          q.created_at,
+          q.status
+         FROM queues q
+         JOIN patients p ON q.patient_id = p.id
+         WHERE q.clinic_id = ? AND q.status = ?
+         ORDER BY q.created_at ASC`,
+        [auth.user!.clinicId, QueueStatus['CONSULT_WAIT']]
+      )
+
+      return response.ok({
+        message: 'Data fetched!',
+        data: { queue: queueData[0], total: queueData[0].length },
+      })
+    } catch (error) {
+      throw error
+    }
   }
 
   async getDoctorConsultWaitQueue({ response, auth }: HttpContext) {
@@ -45,18 +54,69 @@ export default class QueuesController {
         q.id,
         p.full_name,
         p.record_number,
-        q.registration_number
+        q.registration_number,
+        CASE
+          WHEN q.status = 'consult-wait' THEN 'Belum Dipanggil'
+          WHEN q.status = 'consulting' THEN 'Sudah Dipanggil'
+        END AS status
        FROM queues q
        JOIN patients p ON q.patient_id = p.id
-       WHERE q.clinic_id = ? AND q.doctor_id = ? AND q.status = ?
-       ORDER BY q.created_at ASC`,
-      [auth.user!.clinicId, doctorAssistant.doctorId, QueueStatus['CONSULT_WAIT']]
+       WHERE q.clinic_id = ? AND q.doctor_id = ? AND q.status = ? OR q.status = ?
+       ORDER BY
+        CASE
+          WHEN q.status = 'consult-wait' THEN 0
+          WHEN q.status = 'consulting' THEN 1
+        END,
+        q.created_at ASC`,
+      [
+        auth.user!.clinicId,
+        doctorAssistant.doctorId,
+        QueueStatus['CONSULT_WAIT'],
+        QueueStatus['CONSULTING'],
+      ]
     )
 
     return response.ok({
       message: 'Data fetched',
       data: { queue: queueData[0], total: queueData[0].length },
     })
+  }
+
+  async getDoctorConsultingQueue({ response, auth, bouncer }: HttpContext) {
+    try {
+      if (await bouncer.with('QueuePolicy').denies('viewDoctor')) {
+        throw new ForbiddenException()
+      }
+
+      const doctorData = await Doctor.query()
+        .whereHas('profile', (builderProfile) => {
+          builderProfile.whereHas('user', (builderUser) => {
+            builderUser.where('id', auth.user!.id)
+          })
+        })
+        .firstOrFail()
+
+      const queueData = await db.rawQuery(
+        `SELECT
+          q.id,
+          p.full_name,
+          p.record_number,
+          q.registration_number,
+          DATE_FORMAT(q.created_at, '%Y-%m-%d') AS queue_date
+         FROM queues q
+         JOIN patients p ON q.patient_id = p.id
+         WHERE q.clinic_id = ? AND q.doctor_id = ? AND q.status = ?
+         ORDER BY q.created_at ASC`,
+        [auth.user!.clinicId, doctorData.id, QueueStatus['CONSULTING']]
+      )
+
+      return response.ok({
+        message: 'Data fetched!',
+        data: queueData[0],
+      })
+    } catch (error) {
+      throw error
+    }
   }
 
   async changeStatusToConsultingQueue({ response, params, bouncer }: HttpContext) {

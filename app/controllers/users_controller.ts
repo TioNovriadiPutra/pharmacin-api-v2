@@ -39,7 +39,7 @@ export default class UsersController {
 
   async getAdministrators({ response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('UserPolicy').denies('showEmployee')) {
+      if (await bouncer.with('UserPolicy').denies('before')) {
         throw new ForbiddenException()
       }
 
@@ -74,7 +74,7 @@ export default class UsersController {
 
   async getAdministratorDetail({ response, bouncer, params }: HttpContext) {
     try {
-      if (await bouncer.with('UserPolicy').denies('showEmployee')) {
+      if (await bouncer.with('UserPolicy').denies('before')) {
         throw new ForbiddenException()
       }
 
@@ -116,7 +116,7 @@ export default class UsersController {
       const administratorData = await User.findOrFail(params.id)
       const profileData = await Profile.findByOrFail('user_id', params.id)
 
-      if (await bouncer.with('UserPolicy').denies('deleteEmployee', administratorData)) {
+      if (await bouncer.with('UserPolicy').denies('delete', administratorData)) {
         throw new ForbiddenException()
       }
 
@@ -147,7 +147,7 @@ export default class UsersController {
     try {
       const administratorData = await User.findOrFail(params.id)
 
-      if (await bouncer.with('UserPolicy').denies('deleteEmployee', administratorData)) {
+      if (await bouncer.with('UserPolicy').denies('delete', administratorData)) {
         throw new ForbiddenException()
       }
 

@@ -97,7 +97,7 @@ export default class PatientsController {
 
   async addPatient({ request, response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('PatientPolicy').denies('create')) {
+      if (await bouncer.with('PatientPolicy').denies('before')) {
         throw new ForbiddenException()
       }
 

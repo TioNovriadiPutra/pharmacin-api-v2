@@ -4,11 +4,11 @@ import { AuthorizerResponse } from '@adonisjs/bouncer/types'
 import { Role } from '../enums/role_enum.js'
 
 export default class UserPolicy extends BasePolicy {
-  showEmployee(user: User): AuthorizerResponse {
+  before(user: User): AuthorizerResponse {
     return user.roleId === Role['ADMIN']
   }
 
-  deleteEmployee(user: User, employee: User): AuthorizerResponse {
-    return user.roleId === Role['ADMIN'] && user.clinicId === employee.clinicId
+  delete(user: User, employee: User): AuthorizerResponse {
+    return this.before(user) && user.clinicId === employee.clinicId
   }
 }

@@ -5,7 +5,7 @@ import db from '@adonisjs/lucid/services/db'
 export default class DoctorSpecialistsController {
   async getSpecialities({ response, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('DoctorSpecialistPolicy').denies('viewAll')) {
+      if (await bouncer.with('DoctorSpecialistPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 

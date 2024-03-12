@@ -9,14 +9,19 @@ export default class QueuePolicy extends BasePolicy {
     return user.roleId === Role['ADMINISTRATOR']
   }
 
+  view(user: User) {
+    return user.roleId === Role['ADMIN'] || this.addPatientQueue(user)
+  }
+
+  viewDoctor(user: User) {
+    return user.roleId === Role['DOCTOR']
+  }
+
   changeStatusToConsultingQueue(user: User, queue: Queue): AuthorizerResponse {
     return user.roleId === Role['DOCTOR_ASSISTANT'] && user.clinicId === queue.clinicId
   }
 
   cancelQueue(user: User, queue: Queue): AuthorizerResponse {
-    return (
-      user.roleId === Role['ADMINISTRATOR'] ||
-      (user.roleId === Role['DOCTOR_ASSISTANT'] && user.clinicId === queue.clinicId)
-    )
+    return this.addPatientQueue(user) || this.changeStatusToConsultingQueue(user, queue)
   }
 }

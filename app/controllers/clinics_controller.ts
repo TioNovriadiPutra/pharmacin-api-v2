@@ -9,7 +9,7 @@ import db from '@adonisjs/lucid/services/db'
 export default class ClinicsController {
   async getClinicDetail({ response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('ClinicPolicy').denies('view')) {
+      if (await bouncer.with('ClinicPolicy').denies('before')) {
         throw new ForbiddenException()
       }
 
@@ -38,7 +38,7 @@ export default class ClinicsController {
 
   async updateClinic({ request, response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('ClinicPolicy').denies('edit')) {
+      if (await bouncer.with('ClinicPolicy').denies('before')) {
         throw new ForbiddenException()
       }
 

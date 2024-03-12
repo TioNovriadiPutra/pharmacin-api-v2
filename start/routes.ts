@@ -14,6 +14,8 @@ const UnitsController = () => import('#controllers/units_controller')
 const OccupationsController = () => import('#controllers/occupations_controller')
 const ClinicsController = () => import('#controllers/clinics_controller')
 const SpecialitiesController = () => import('#controllers/doctor_specialists_controller')
+const EmployeesController = () => import('#controllers/employees_controller')
+const DoctorAssistantsController = () => import('#controllers/doctor_assistants_controller')
 
 router.get('/', async () => {
   return {
@@ -70,6 +72,22 @@ router
         router.delete('/:id', [UsersController, 'deleteAdministrator'])
       })
       .prefix('/administrator')
+    router
+      .group(() => {
+        router.get('/', [EmployeesController, 'getEmployees'])
+        router.get('/:id', [EmployeesController, 'getEmployeeDetail'])
+        router.put('/:id', [EmployeesController, 'updateEmployee'])
+        router.delete('/:id', [EmployeesController, 'deleteEmployee'])
+      })
+      .prefix('/employee')
+    router
+      .group(() => {
+        router.get('/', [DoctorAssistantsController, 'getAssistants'])
+        router.get('/:id', [DoctorAssistantsController, 'getAssistantDetail'])
+        router.put('/:id', [DoctorAssistantsController, 'updateDoctorAssistant'])
+        router.delete('/:id', [DoctorAssistantsController, 'deleteAssistant'])
+      })
+      .prefix('/assistant')
   })
   .prefix('/user')
   .use(
@@ -174,6 +192,7 @@ router
   .group(() => {
     router.get('/consult-wait', [QueueController, 'getConsultWaitQueue'])
     router.get('/doctor/consult-wait', [QueueController, 'getDoctorConsultWaitQueue'])
+    router.get('/doctor/consulting', [QueueController, 'getDoctorConsultingQueue'])
     router.patch('/consult-wait/:id', [QueueController, 'changeStatusToConsultingQueue'])
     router.delete('/cancel/:id', [QueueController, 'cancelQueue'])
   })

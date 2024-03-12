@@ -4,11 +4,21 @@ import { AuthorizerResponse } from '@adonisjs/bouncer/types'
 import { Role } from '../enums/role_enum.js'
 
 export default class DoctorPolicy extends BasePolicy {
+  before(user: User): AuthorizerResponse | undefined {
+    if (user.roleId === Role['ADMIN']) {
+      return true
+    }
+  }
+
   view(user: User): AuthorizerResponse {
-    return user.roleId === Role['ADMIN'] || user.roleId === Role['ADMINISTRATOR']
+    return user.roleId === Role['ADMINISTRATOR']
   }
 
   create(user: User, doctor: User): AuthorizerResponse {
-    return user.roleId === Role['ADMIN'] && user.clinicId === doctor.clinicId
+    if (this.before(user)) {
+      return user.clinicId === doctor.clinicId
+    }
+
+    return false
   }
 }
