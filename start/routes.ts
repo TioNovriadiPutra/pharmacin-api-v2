@@ -193,6 +193,7 @@ router
     router.get('/consult-wait', [QueueController, 'getConsultWaitQueue'])
     router.get('/doctor/consult-wait', [QueueController, 'getDoctorConsultWaitQueue'])
     router.get('/doctor/consulting', [QueueController, 'getDoctorConsultingQueue'])
+    router.get('/doctor/consulting/:id', [QueueController, 'getDoctorConsultingQueueDetail'])
     router.patch('/consult-wait/:id', [QueueController, 'changeStatusToConsultingQueue'])
     router.delete('/cancel/:id', [QueueController, 'cancelQueue'])
   })

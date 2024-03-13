@@ -168,4 +168,42 @@ export default class QueuesController {
       }
     }
   }
+
+  async getDoctorConsultingQueueDetail({ response, params, bouncer, auth }: HttpContext) {
+    try {
+      if (await bouncer.with('QueuePolicy').denies('viewDoctor')) {
+        throw new ForbiddenException()
+      }
+
+      const queueData = await db.rawQuery(
+        `SELECT
+          q.registration_number,
+          p.record_number,
+          p.full_name,
+          CONCAT(p.pob, ", ", DATE_FORMAT(p.dob, "%d %M %Y")) AS ttl,
+          p.address,
+          DATE_FORMAT(q.created_at, "%Y-%m-%d") AS queue_date,
+          CONCAT(pd.full_name, ", (", ds.speciality_title, ")") AS doctor,
+          p.allergy
+         FROM queues q
+         JOIN patients p ON q.patient_id = p.id
+         JOIN doctors d ON q.doctor_id = d.id
+         JOIN profiles pd ON d.profile_id = pd.id
+         JOIN doctor_specialists ds ON d.speciality_id = ds.id
+         WHERE q.id = ? AND pd.user_id = ? AND q.status = ?`,
+        [params.id, auth.user!.id, QueueStatus['CONSULTING']]
+      )
+
+      if (queueData[0].length === 0) {
+        throw new DataNotFoundException('Data pasien tidak ditemukan!')
+      }
+
+      return response.ok({
+        message: 'Data fetched!',
+        data: queueData[0][0],
+      })
+    } catch (error) {
+      throw error
+    }
+  }
 }
