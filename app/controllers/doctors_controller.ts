@@ -142,4 +142,6 @@ export default class DoctorsController {
       throw error
     }
   }
+
+  async addAssessment({}: HttpContext) {}
 }

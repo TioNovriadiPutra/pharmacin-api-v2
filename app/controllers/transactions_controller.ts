@@ -11,6 +11,7 @@ import idConverter from '../helpers/id_converter.js'
 import ValidationException from '#exceptions/validation_exception'
 import DataNotFoundException from '#exceptions/data_not_found_exception'
 import skipData from '../helpers/pagination.js'
+import ForbiddenException from '#exceptions/forbidden_exception'
 
 export default class TransactionsController {
   async getPurchaseTransactions({ request, response, auth }: HttpContext) {
@@ -47,31 +48,48 @@ export default class TransactionsController {
     }
   }
 
-  async showDetailPurchaseTransaction({ request, response, auth }: HttpContext) {
+  async getPurchaseTransactionDetail({ response, bouncer, auth, params }: HttpContext) {
     try {
-      if (auth.user) {
-        var params = request.params()
-
-        var id = params.id
-
-        const purchaseDataHeader = await db.rawQuery(
-          'SELECT purchase_transactions.factory_name,clinic_name,invoice_number,total_price FROM purchase_transactions JOIN drug_factories ON purchase_transactions.drug_factory_id = drug_factories.id JOIN clinics ON purchase_transactions.clinic_id = clinics.id WHERE purchase_transactions.id = ?',
-          [id]
-        )
-
-        const purchaseDataDetail = await db.rawQuery(
-          'SELECT drug_name, expired, quantity, purchase_price, total_price FROM purchase_shopping_carts WHERE purchase_transaction_id = ?',
-          [id]
-        )
-
-        return response.ok({
-          message: 'Data fetched!',
-          dataHeader: purchaseDataHeader[0],
-          dataDetail: purchaseDataDetail[0],
-        })
+      if (await bouncer.with('TransactionPolicy').denies('view')) {
+        throw new ForbiddenException()
       }
+
+      const invoiceData = await db.rawQuery(
+        `SELECT
+          pt.invoice_number,
+          df.factory_name,
+          DATE_FORMAT(pt.created_at, '%Y-%m-%d, %H:%i:%s') AS transaction_date,
+          JSON_ARRAY(
+            JSON_OBJECT(
+              'drug', psc.drug_name,
+              'expired', DATE_FORMAT(psc.expired, '%Y-%m-%d'),
+              'quantity', psc.quantity,
+              'purchase_price', psc.purchase_price,
+              'total_price', psc.total_price
+            )
+          ) AS shopping_carts,
+          pt.total_price
+         FROM purchase_transactions pt
+         JOIN drug_factories df ON pt.drug_factory_id = df.id
+         JOIN purchase_shopping_carts psc ON psc.purchase_transaction_id = pt.id
+         WHERE pt.id = ? AND pt.clinic_id = ?`,
+        [params.id, auth.user!.clinicId]
+      )
+
+      if (invoiceData[0].length === 0) {
+        throw new DataNotFoundException('Data transaksi tidak ditemukan!')
+      }
+
+      Object.assign(invoiceData[0][0], {
+        shopping_carts: JSON.parse(invoiceData[0][0].shopping_carts),
+      })
+
+      return response.ok({
+        message: 'Data fetched!',
+        data: invoiceData[0][0],
+      })
     } catch (error) {
-      console.log(error)
+      throw error
     }
   }
 

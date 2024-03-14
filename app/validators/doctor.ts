@@ -16,3 +16,17 @@ export const updateDoctorValidator = vine.compile(
     address: vine.string().optional(),
   })
 )
+
+export const addAssessmentValidator = vine.compile(
+  vine.object({
+    weight: vine.number().optional(),
+    height: vine.number().optional(),
+    temperature: vine.number().optional(),
+    bloodPressure: vine.number().optional(),
+    pulse: vine.number().optional(),
+    subjective: vine.string().optional(),
+    assessment: vine.string().optional(),
+    objective: vine.string().optional(),
+    plan: vine.string().optional(),
+  })
+)

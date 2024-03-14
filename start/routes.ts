@@ -151,6 +151,7 @@ router
     router
       .group(() => {
         router.get('/', [TransactionsController, 'getPurchaseTransactions'])
+        router.get('/:id', [TransactionsController, 'getPurchaseTransactionDetail'])
         router.post('/', [TransactionsController, 'addPurchaseTransaction'])
         router.delete('/:id', [TransactionsController, 'deletePurchaseTransaction'])
       })
