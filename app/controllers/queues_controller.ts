@@ -119,56 +119,6 @@ export default class QueuesController {
     }
   }
 
-  async changeStatusToConsultingQueue({ response, params, bouncer }: HttpContext) {
-    try {
-      const queueData = await Queue.findOrFail(params.id)
-
-      if (await bouncer.with('QueuePolicy').denies('changeStatusToConsultingQueue', queueData)) {
-        throw new ForbiddenException()
-      }
-
-      queueData.status = QueueStatus['CONSULTING']
-
-      await queueData.save()
-
-      return response.ok({
-        message: queueData.registrationNumber,
-      })
-    } catch (error) {
-      if (error.status === 404) {
-        throw new DataNotFoundException('Data antrian tidak ditemukan!')
-      } else if (error.status === 403) {
-        throw error
-      }
-    }
-  }
-
-  async cancelQueue({ response, params, bouncer }: HttpContext) {
-    try {
-      const queueData = await Queue.findOrFail(params.id)
-
-      if (await bouncer.with('QueuePolicy').denies('cancelQueue', queueData)) {
-        throw new ForbiddenException()
-      }
-
-      const patientData = await Patient.findOrFail(queueData.patientId)
-      patientData.ready = true
-
-      await queueData.delete()
-      await patientData.save()
-
-      return response.ok({
-        message: 'Antrian dibatalkan!',
-      })
-    } catch (error) {
-      if (error.status === 404) {
-        throw new DataNotFoundException('Data antrian tidak ditemukan!')
-      } else {
-        throw error
-      }
-    }
-  }
-
   async getDoctorConsultingQueueDetail({ response, params, bouncer, auth }: HttpContext) {
     try {
       if (await bouncer.with('QueuePolicy').denies('viewDoctor')) {
@@ -233,6 +183,56 @@ export default class QueuesController {
       })
     } catch (error) {
       throw error
+    }
+  }
+
+  async changeStatusToConsultingQueue({ response, params, bouncer }: HttpContext) {
+    try {
+      const queueData = await Queue.findOrFail(params.id)
+
+      if (await bouncer.with('QueuePolicy').denies('changeStatusToConsultingQueue', queueData)) {
+        throw new ForbiddenException()
+      }
+
+      queueData.status = QueueStatus['CONSULTING']
+
+      await queueData.save()
+
+      return response.ok({
+        message: queueData.registrationNumber,
+      })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data antrian tidak ditemukan!')
+      } else if (error.status === 403) {
+        throw error
+      }
+    }
+  }
+
+  async cancelQueue({ response, params, bouncer }: HttpContext) {
+    try {
+      const queueData = await Queue.findOrFail(params.id)
+
+      if (await bouncer.with('QueuePolicy').denies('cancelQueue', queueData)) {
+        throw new ForbiddenException()
+      }
+
+      const patientData = await Patient.findOrFail(queueData.patientId)
+      patientData.ready = true
+
+      await queueData.delete()
+      await patientData.save()
+
+      return response.ok({
+        message: 'Antrian dibatalkan!',
+      })
+    } catch (error) {
+      if (error.status === 404) {
+        throw new DataNotFoundException('Data antrian tidak ditemukan!')
+      } else {
+        throw error
+      }
     }
   }
 }
