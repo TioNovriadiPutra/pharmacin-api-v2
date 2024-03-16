@@ -13,7 +13,7 @@ import ValidationException from '#exceptions/validation_exception'
 export default class DoctorAssistantsController {
   async getAssistants({ response, bouncer, auth }: HttpContext) {
     try {
-      if (await bouncer.with('DoctorAssistantPolicy').denies('before')) {
+      if (await bouncer.with('DoctorAssistantPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 
@@ -44,7 +44,7 @@ export default class DoctorAssistantsController {
 
   async getAssistantDetail({ response, bouncer, params, auth }: HttpContext) {
     try {
-      if (await bouncer.with('DoctorAssistantPolicy').denies('before')) {
+      if (await bouncer.with('DoctorAssistantPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 

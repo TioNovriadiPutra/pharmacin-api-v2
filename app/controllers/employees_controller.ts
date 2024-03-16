@@ -44,7 +44,7 @@ export default class EmployeesController {
 
   async getEmployeeDetail({ response, bouncer, params }: HttpContext) {
     try {
-      if (await bouncer.with('EmployeePolicy').denies('before')) {
+      if (await bouncer.with('EmployeePolicy').denies('detail')) {
         throw new ForbiddenException()
       }
 

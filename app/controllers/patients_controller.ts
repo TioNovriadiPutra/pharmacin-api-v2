@@ -17,7 +17,7 @@ import getRandomNumId from '../helpers/random_num.js'
 export default class PatientsController {
   async getPatients({ request, response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('PatientPolicy').denies('handlePatient')) {
+      if (await bouncer.with('PatientPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 
@@ -57,7 +57,7 @@ export default class PatientsController {
 
   async getQueuingPatients({ response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('PatientPolicy').denies('handlePatient')) {
+      if (await bouncer.with('PatientPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 
@@ -97,7 +97,7 @@ export default class PatientsController {
 
   async addPatient({ request, response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('PatientPolicy').denies('before')) {
+      if (await bouncer.with('PatientPolicy').denies('handle')) {
         throw new ForbiddenException()
       }
 

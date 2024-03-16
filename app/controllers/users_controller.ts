@@ -39,7 +39,7 @@ export default class UsersController {
 
   async getAdministrators({ response, auth, bouncer }: HttpContext) {
     try {
-      if (await bouncer.with('UserPolicy').denies('before')) {
+      if (await bouncer.with('UserPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 
@@ -74,7 +74,7 @@ export default class UsersController {
 
   async getAdministratorDetail({ response, bouncer, params }: HttpContext) {
     try {
-      if (await bouncer.with('UserPolicy').denies('before')) {
+      if (await bouncer.with('UserPolicy').denies('view')) {
         throw new ForbiddenException()
       }
 
