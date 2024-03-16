@@ -192,6 +192,7 @@ router
 router
   .group(() => {
     router.get('/consult-wait', [QueueController, 'getConsultWaitQueue'])
+    router.get('/drug-pick-up', [QueueController, 'getPharmaciDrugPickUpQueue'])
     router.get('/doctor/consult-wait', [QueueController, 'getDoctorConsultWaitQueue'])
     router.get('/doctor/consulting', [QueueController, 'getDoctorConsultingQueue'])
     router.get('/doctor/consulting/:id', [QueueController, 'getDoctorConsultingQueueDetail'])

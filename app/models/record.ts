@@ -35,6 +35,9 @@ export default class Record extends BaseModel {
   declare plan?: string
 
   @column()
+  declare assessment?: string
+
+  @column()
   declare nik: string
 
   @column()
