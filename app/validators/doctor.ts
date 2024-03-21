@@ -28,5 +28,6 @@ export const addAssessmentValidator = vine.compile(
     assessment: vine.string().optional(),
     objective: vine.string().optional(),
     plan: vine.string().optional(),
+    totalPrice: vine.number(),
   })
 )

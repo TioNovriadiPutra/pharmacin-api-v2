@@ -5,13 +5,16 @@ import db from '@adonisjs/lucid/services/db'
 import { Role } from '../enums/role_enum.js'
 import User from '#models/user'
 import Profile from '#models/profile'
-import { updateDoctorValidator } from '#validators/doctor'
+import { addAssessmentValidator, updateDoctorValidator } from '#validators/doctor'
 import { Gender } from '../enums/gender_enum.js'
 import Doctor from '#models/doctor'
 import ValidationException from '#exceptions/validation_exception'
-// import Record from '#models/record'
-// import Queue from '#models/queue'
-// import { QueueStatus } from '../enums/queue_enum.js'
+import Record from '#models/record'
+import Queue from '#models/queue'
+import { QueueStatus } from '../enums/queue_enum.js'
+import SellingTransaction from '#models/selling_transaction'
+import { DateTime } from 'luxon'
+import idConverter from '../helpers/id_converter.js'
 
 export default class DoctorsController {
   async getDoctors({ response, auth, bouncer }: HttpContext) {
@@ -146,58 +149,71 @@ export default class DoctorsController {
     }
   }
 
-  // async addAssessment({ request, response, bouncer, params }: HttpContext) {
-  //   try {
-  //     const queueData = await Queue.query()
-  //       .preload('clinic')
-  //       .preload('patient')
-  //       .preload('doctor', (tmp) => {
-  //         tmp.preload('profile')
-  //         tmp.preload('doctorSpeciality')
-  //       })
-  //       .where('id', params.id)
-  //       .firstOrFail()
+  async addAssessment({ request, response, bouncer, params, auth }: HttpContext) {
+    try {
+      const queueData = await Queue.query()
+        .preload('clinic')
+        .preload('patient')
+        .preload('doctor', (tmp) => {
+          tmp.preload('profile')
+          tmp.preload('doctorSpeciality')
+        })
+        .where('id', params.id)
+        .firstOrFail()
 
-  //     if (await bouncer.with('DoctorPolicy').denies('assessment', queueData)) {
-  //       throw new ForbiddenException()
-  //     }
+      if (await bouncer.with('DoctorPolicy').denies('assessment', queueData)) {
+        throw new ForbiddenException()
+      }
 
-  //     const data = await request.validateUsing(addAssessmentValidator)
+      const data = await request.validateUsing(addAssessmentValidator)
 
-  //     const newRecord = new Record()
-  //     newRecord.weight = data.weight
-  //     newRecord.height = data.height
-  //     newRecord.temperature = data.temperature
-  //     newRecord.bloodPressure = data.bloodPressure
-  //     newRecord.pulse = data.pulse
-  //     newRecord.subjective = data.subjective
-  //     newRecord.objective = data.objective
-  //     newRecord.plan = data.plan
-  //     newRecord.assessment = data.assessment
-  //     newRecord.doctorName =
-  //       queueData.doctor.profile.fullName + ', ' + queueData.doctor.doctorSpeciality.specialityTitle
-  //     newRecord.clinicName = queueData.clinic.clinicName
-  //     newRecord.clinicPhone = queueData.clinic.clinicPhone
-  //     newRecord.patientId = queueData.patient.id
-  //     newRecord.doctorId = queueData.doctor.id
-  //     newRecord.clinicId = queueData.clinic.id
+      queueData.status = QueueStatus['DRUG_PICK_UP']
 
-  //     queueData.status = QueueStatus['DRUG_PICK_UP']
+      const newRecord = new Record()
+      newRecord.weight = data.weight
+      newRecord.height = data.height
+      newRecord.temperature = data.temperature
+      newRecord.bloodPressure = data.bloodPressure
+      newRecord.pulse = data.pulse
+      newRecord.subjective = data.subjective
+      newRecord.objective = data.objective
+      newRecord.plan = data.plan
+      newRecord.assessment = data.assessment
+      newRecord.doctorName =
+        queueData.doctor.profile.fullName + ', ' + queueData.doctor.doctorSpeciality.specialityTitle
+      newRecord.clinicName = queueData.clinic.clinicName
+      newRecord.clinicPhone = queueData.clinic.clinicPhone
+      newRecord.patientId = queueData.patient.id
+      newRecord.doctorId = queueData.doctor.id
+      newRecord.clinicId = queueData.clinic.id
 
-  //     await newRecord.save()
-  //     await queueData.save()
+      await newRecord.save()
+      await queueData.save()
 
-  //     return response.created({
-  //       message: 'Data assessment berhasil ditambahkan!',
-  //     })
-  //   } catch (error) {
-  //     if (error.status === 422) {
-  //       throw new ValidationException(error.messages)
-  //     } else if (error.status === 404) {
-  //       throw new DataNotFoundException('Data antrian tidak ditemukan!')
-  //     } else {
-  //       throw error
-  //     }
-  //   }
-  // }
+      const invoiceDate = DateTime.now()
+
+      const newSellingTransaction = new SellingTransaction()
+      newSellingTransaction.registrationNumber = queueData.registrationNumber
+      newSellingTransaction.totalPrice = data.totalPrice
+      newSellingTransaction.clinicId = auth.user!.clinicId
+      newSellingTransaction.recordId = newRecord.id
+      newSellingTransaction.patientId = queueData.patientId
+
+      newSellingTransaction.invoiceNumber = `INV/${invoiceDate.year}${invoiceDate.month}${invoiceDate.day}/${idConverter(newSellingTransaction.id)}`
+
+      await newSellingTransaction.save()
+
+      return response.created({
+        message: 'Data assessment berhasil ditambahkan!',
+      })
+    } catch (error) {
+      if (error.status === 422) {
+        throw new ValidationException(error.messages)
+      } else if (error.status === 404) {
+        throw new DataNotFoundException('Data antrian tidak ditemukan!')
+      } else {
+        throw error
+      }
+    }
+  }
 }

@@ -7,6 +7,7 @@ import Clinic from './clinic.js'
 import DrugStock from './drug_stock.js'
 import PurchaseShoppingCart from './purchase_shopping_cart.js'
 import Unit from './unit.js'
+import SellingShoppingCart from './selling_shopping_cart.js'
 
 export default class Drug extends BaseModel {
   @column({ isPrimary: true })
@@ -74,4 +75,7 @@ export default class Drug extends BaseModel {
 
   @belongsTo(() => Unit)
   declare unit: BelongsTo<typeof Unit>
+
+  @hasMany(() => SellingShoppingCart)
+  declare sellingShoppingCarts: HasMany<typeof SellingShoppingCart>
 }

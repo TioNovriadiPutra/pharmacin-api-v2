@@ -9,6 +9,7 @@ import PurchaseTransaction from './purchase_transaction.js'
 import Patient from './patient.js'
 import Doctor from './doctor.js'
 import Record from './record.js'
+import SellingTransaction from './selling_transaction.js'
 
 export default class Clinic extends BaseModel {
   @column({ isPrimary: true })
@@ -57,4 +58,7 @@ export default class Clinic extends BaseModel {
 
   @hasMany(() => Record)
   declare records: HasMany<typeof Record>
+
+  @hasMany(() => SellingTransaction)
+  declare sellingTransactions: HasMany<typeof SellingTransaction>
 }

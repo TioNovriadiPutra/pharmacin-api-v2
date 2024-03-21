@@ -6,6 +6,7 @@ import type { BelongsTo, HasMany, HasOne } from '@adonisjs/lucid/types/relations
 import Occupation from './occupation.js'
 import Queue from './queue.js'
 import Record from './record.js'
+import SellingTransaction from './selling_transaction.js'
 
 export default class Patient extends BaseModel {
   @column({ isPrimary: true })
@@ -74,4 +75,7 @@ export default class Patient extends BaseModel {
 
   @hasMany(() => Record)
   declare records: HasMany<typeof Record>
+
+  @hasMany(() => SellingTransaction)
+  declare sellingTransactions: HasMany<typeof SellingTransaction>
 }
