@@ -27,6 +27,12 @@ export default class Clinic extends BaseModel {
   @column()
   declare paymentStatus: boolean
 
+  @column()
+  declare outpatientFee: number
+
+  @column()
+  declare sellingFee: number
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

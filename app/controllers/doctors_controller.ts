@@ -201,6 +201,7 @@ export default class DoctorsController {
       newSellingTransaction.clinicId = auth.user!.clinicId
       newSellingTransaction.recordId = newRecord.id
       newSellingTransaction.patientId = queueData.patientId
+      newSellingTransaction.queueId = params.id
 
       await newSellingTransaction.save()
 

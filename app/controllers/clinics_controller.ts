@@ -2,7 +2,7 @@ import DataNotFoundException from '#exceptions/data_not_found_exception'
 import ForbiddenException from '#exceptions/forbidden_exception'
 import ValidationException from '#exceptions/validation_exception'
 import Clinic from '#models/clinic'
-import { updateClinicValidator } from '#validators/clinic'
+import { updateAdminFeeValidator, updateClinicValidator } from '#validators/clinic'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 
@@ -18,6 +18,34 @@ export default class ClinicsController {
           clinic_name,
           address,
           clinic_phone
+         FROM clinics
+         WHERE id = ?`,
+        [auth.user!.clinicId]
+      )
+
+      if (clinicData[0].length === 0) {
+        throw new DataNotFoundException('Data klinik tidak ditemukan!')
+      }
+
+      return response.ok({
+        message: 'Data fetched!',
+        data: clinicData[0][0],
+      })
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getClinicAdminFee({ response, bouncer, auth }: HttpContext) {
+    try {
+      if (await bouncer.with('ClinicPolicy').denies('handle')) {
+        throw new ForbiddenException()
+      }
+
+      const clinicData = await db.rawQuery(
+        `SELECT
+          outpatient_fee,
+          selling_fee
          FROM clinics
          WHERE id = ?`,
         [auth.user!.clinicId]
@@ -61,6 +89,35 @@ export default class ClinicsController {
         throw new ValidationException(error.messages)
       } else if (error.status === 404) {
         throw new DataNotFoundException('Data klinik tidak ditemukan!')
+      }
+    }
+  }
+
+  async updateAdminFee({ request, response, bouncer, auth }: HttpContext) {
+    try {
+      if (await bouncer.with('ClinicPolicy').denies('handle')) {
+        throw new ForbiddenException()
+      }
+
+      const clinicData = await Clinic.findOrFail(auth.user!.clinicId)
+
+      const data = await request.validateUsing(updateAdminFeeValidator)
+
+      clinicData.outpatientFee = data.outpatientFee
+      clinicData.sellingFee = data.sellingFee
+
+      await clinicData.save()
+
+      return response.ok({
+        message: 'Biaya admin berhasil diubah!',
+      })
+    } catch (error) {
+      if (error.status === 422) {
+        throw new ValidationException(error.messages)
+      } else if (error.status === 404) {
+        throw new DataNotFoundException('Data klinik tidak ditemukan!')
+      } else {
+        throw error
       }
     }
   }

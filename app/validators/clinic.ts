@@ -12,3 +12,10 @@ export const updateClinicValidator = vine.compile(
     }),
   })
 )
+
+export const updateAdminFeeValidator = vine.compile(
+  vine.object({
+    outpatientFee: vine.number().positive(),
+    sellingFee: vine.number().positive(),
+  })
+)

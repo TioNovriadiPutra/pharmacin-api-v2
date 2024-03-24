@@ -99,7 +99,9 @@ router
 router
   .group(() => {
     router.get('/', [ClinicsController, 'getClinicDetail'])
+    router.get('/fee', [ClinicsController, 'getClinicAdminFee'])
     router.put('/', [ClinicsController, 'updateClinic'])
+    router.patch('/fee', [ClinicsController, 'updateAdminFee'])
   })
   .prefix('/clinic')
   .use(
@@ -159,6 +161,7 @@ router
     router
       .group(() => {
         router.get('/:id', [TransactionsController, 'getSellingTransactionDetail'])
+        router.delete('/cart/:id', [TransactionsController, 'deleteSellingShoppingCart'])
       })
       .prefix('/selling')
   })
