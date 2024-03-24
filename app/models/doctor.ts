@@ -30,7 +30,9 @@ export default class Doctor extends BaseModel {
   @belongsTo(() => Profile)
   declare profile: BelongsTo<typeof Profile>
 
-  @belongsTo(() => DoctorSpecialist)
+  @belongsTo(() => DoctorSpecialist, {
+    foreignKey: 'specialityId',
+  })
   declare doctorSpeciality: BelongsTo<typeof DoctorSpecialist>
 
   @hasMany(() => DoctorAssistant)

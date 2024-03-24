@@ -15,6 +15,9 @@ import { QueueStatus } from '../enums/queue_enum.js'
 import SellingTransaction from '#models/selling_transaction'
 import { DateTime } from 'luxon'
 import idConverter from '../helpers/id_converter.js'
+import Drug from '#models/drug'
+import SellingShoppingCart from '#models/selling_shopping_cart'
+import RecordDrugAssessment from '#models/record_drug_assessment'
 
 export default class DoctorsController {
   async getDoctors({ response, auth, bouncer }: HttpContext) {
@@ -199,9 +202,37 @@ export default class DoctorsController {
       newSellingTransaction.recordId = newRecord.id
       newSellingTransaction.patientId = queueData.patientId
 
+      await newSellingTransaction.save()
+
       newSellingTransaction.invoiceNumber = `INV/${invoiceDate.year}${invoiceDate.month}${invoiceDate.day}/${idConverter(newSellingTransaction.id)}`
 
       await newSellingTransaction.save()
+
+      if (data.drugCarts) {
+        data.drugCarts.forEach(async (cart) => {
+          const drugData = await Drug.findOrFail(cart.drugId)
+
+          const newSellingShoppingCart = new SellingShoppingCart()
+          newSellingShoppingCart.drugName = drugData.drug
+          newSellingShoppingCart.sellingPrice = drugData.sellingPrice
+          newSellingShoppingCart.instruction = cart.instruction
+          newSellingShoppingCart.unitName = drugData.unitName
+          newSellingShoppingCart.quantity = cart.quantity
+          newSellingShoppingCart.totalPrice = cart.totalPrice
+          newSellingShoppingCart.sellingTransactionId = newSellingTransaction.id
+          newSellingShoppingCart.drugId = cart.drugId
+
+          const newRecordDrugAssessment = new RecordDrugAssessment()
+          newRecordDrugAssessment.drugName = drugData.drug
+          newRecordDrugAssessment.unitName = drugData.unitName
+          newRecordDrugAssessment.instruction = cart.instruction
+          newRecordDrugAssessment.drugId = cart.drugId
+          newRecordDrugAssessment.recordId = newRecord.id
+
+          await newSellingShoppingCart.save()
+          await newRecordDrugAssessment.save()
+        })
+      }
 
       return response.created({
         message: 'Data assessment berhasil ditambahkan!',

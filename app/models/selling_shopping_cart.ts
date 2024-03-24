@@ -21,6 +21,9 @@ export default class SellingShoppingCart extends BaseModel {
   declare unitName: string
 
   @column()
+  declare quantity: number
+
+  @column()
   declare totalPrice: number
 
   @column.dateTime({ autoCreate: true })
@@ -30,7 +33,7 @@ export default class SellingShoppingCart extends BaseModel {
   declare updatedAt: DateTime
 
   @column()
-  declare sellingTransactionId?: number
+  declare sellingTransactionId: number
 
   @column()
   declare drugId?: number

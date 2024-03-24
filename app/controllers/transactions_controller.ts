@@ -93,6 +93,67 @@ export default class TransactionsController {
     }
   }
 
+  async getSellingTransactionDetail({ response, bouncer, params }: HttpContext) {
+    try {
+      if (await bouncer.with('TransactionPolicy').denies('view')) {
+        throw new ForbiddenException()
+      }
+
+      const transactionData = await db.rawQuery(
+        `SELECT
+          q.id,
+          q.registration_number,
+          p.record_number,
+          p.full_name,
+          CONCAT(p.pob, ", ", p.dob) AS ttl,
+          p.address,
+          DATE_FORMAT(q.created_at, "%Y-%m-%d") AS created_at,
+          r.doctor_name,
+          p.allergy,
+          CASE
+            WHEN st.status = 0 THEN "Belum Diproses"
+            WHEN st.status = 1 THEN "Sudah Diproses"
+          END AS status,
+          CONCAT(
+            "[",
+            GROUP_CONCAT(
+              JSON_OBJECT(
+                "drug_name", ssc.drug_name,
+                "quantity", ssc.quantity,
+                "unit_name", ssc.unit_name,
+                "instruction", ssc.instruction,
+                "total_price", ssc.total_price
+              ) ORDER BY ssc.id SEPARATOR ','
+            ),
+            "]"
+          ) AS drug_carts,
+          st.total_price
+         FROM queues q
+         JOIN patients p ON q.patient_id = p.id
+         JOIN selling_transactions st ON q.id = st.queue_id
+         JOIN records r ON st.record_id = r.id
+         JOIN selling_shopping_carts ssc ON st.id = ssc.selling_transaction_id
+         WHERE q.id = ?`,
+        [params.id]
+      )
+
+      if (transactionData[0].length === 0) {
+        throw new DataNotFoundException('Data transaksi tidak ditemukan!')
+      }
+
+      Object.assign(transactionData[0][0], {
+        drug_carts: JSON.parse(transactionData[0][0].drug_carts),
+      })
+
+      return response.ok({
+        message: 'Data fetched!',
+        data: transactionData[0][0],
+      })
+    } catch (error) {
+      throw error
+    }
+  }
+
   async addPurchaseTransaction({ request, response, auth }: HttpContext) {
     try {
       const data = await request.validateUsing(addPurchaseTransactionValidator)

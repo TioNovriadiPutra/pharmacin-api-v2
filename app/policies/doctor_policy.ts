@@ -3,6 +3,7 @@ import { BasePolicy } from '@adonisjs/bouncer'
 import { AuthorizerResponse } from '@adonisjs/bouncer/types'
 import { Role } from '../enums/role_enum.js'
 import Queue from '#models/queue'
+import { QueueStatus } from '../enums/queue_enum.js'
 
 export default class DoctorPolicy extends BasePolicy {
   view(user: User): AuthorizerResponse {
@@ -14,6 +15,10 @@ export default class DoctorPolicy extends BasePolicy {
   }
 
   assessment(user: User, queue: Queue): AuthorizerResponse {
-    return user.roleId === Role['DOCTOR'] && user.clinicId === queue.clinicId
+    return (
+      user.roleId === Role['DOCTOR'] &&
+      user.clinicId === queue.clinicId &&
+      queue.status === QueueStatus['CONSULTING']
+    )
   }
 }

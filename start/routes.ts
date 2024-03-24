@@ -156,6 +156,11 @@ router
         router.delete('/:id', [TransactionsController, 'deletePurchaseTransaction'])
       })
       .prefix('/purchase')
+    router
+      .group(() => {
+        router.get('/:id', [TransactionsController, 'getSellingTransactionDetail'])
+      })
+      .prefix('/selling')
   })
   .prefix('/transaction')
   .use(
@@ -210,6 +215,7 @@ router
   .group(() => {
     router.get('/', [DoctorsController, 'getDoctors'])
     router.get('/:id', [DoctorsController, 'getDoctorDetail'])
+    router.post('/assessment/:id', [DoctorsController, 'addAssessment'])
     router.put('/:id', [DoctorsController, 'updateDoctor'])
     router.delete('/:id', [DoctorsController, 'deleteDoctor'])
   })

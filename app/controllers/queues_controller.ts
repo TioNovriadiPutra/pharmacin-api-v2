@@ -133,7 +133,7 @@ export default class QueuesController {
           CONCAT(p.pob, ", ", DATE_FORMAT(p.dob, "%d %M %Y")) AS ttl,
           p.address,
           DATE_FORMAT(q.created_at, "%Y-%m-%d") AS queue_date,
-          CONCAT(pd.full_name, ", (", ds.speciality_title, ")") AS doctor,
+          CONCAT(pd.full_name, ", ", ds.speciality_title) AS doctor,
           p.allergy
          FROM queues q
          JOIN patients p ON q.patient_id = p.id
@@ -184,6 +184,17 @@ export default class QueuesController {
     } catch (error) {
       throw error
     }
+  }
+
+  async getPharmacyDrugPickUpDetail({ response, bouncer, auth }: HttpContext) {
+    try {
+      const sellingData = await db.rawQuery(
+        `SELECT
+         FROM queues q
+         JOIN patients p ON q.patient_id = p.id
+         JOIN records r ON `
+      )
+    } catch (error) {}
   }
 
   async changeStatusToConsultingQueue({ response, params, bouncer }: HttpContext) {

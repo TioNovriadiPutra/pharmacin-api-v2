@@ -8,6 +8,7 @@ import DrugStock from './drug_stock.js'
 import PurchaseShoppingCart from './purchase_shopping_cart.js'
 import Unit from './unit.js'
 import SellingShoppingCart from './selling_shopping_cart.js'
+import RecordDrugAssessment from './record_drug_assessment.js'
 
 export default class Drug extends BaseModel {
   @column({ isPrimary: true })
@@ -78,4 +79,7 @@ export default class Drug extends BaseModel {
 
   @hasMany(() => SellingShoppingCart)
   declare sellingShoppingCarts: HasMany<typeof SellingShoppingCart>
+
+  @hasMany(() => RecordDrugAssessment)
+  declare recordDrugsAssessment: HasMany<typeof RecordDrugAssessment>
 }
